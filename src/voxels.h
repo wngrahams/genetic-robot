@@ -6,6 +6,9 @@
 #ifndef __VOXELS_H__
 #define __VOXELS_H__
 
+#include <math.h>
+#include <stdlib.h>
+
 #include "ga-utils.h"
 
 #define DEPTH_3X3   1
@@ -16,29 +19,46 @@
 
 #define VOX_SPACE_MAX_DEPTH DEPTH_5X5  // Must be at least (3x3)
 
-#define VOX_ROOT   0
-#define VOX_MIDDLE 1
-#define VOX_EDGE   2
-#define VOX_CORNER 3
-
-#define NUM_R_3x3 1
+#define NUM_R_3X3 1
 #define NUM_M_3X3 6
 #define NUM_E_3X3 12
 #define NUM_C_3X3 8
 
+#define INIT_VOXEL_SPACE(name) \
+    Voxel_space* name = malloc(sizeof(Voxel_space)); \
+    CHECK_MALLOC_ERR(name); \
+    init_voxel_space(name); 
+
+typedef enum voxel_type {
+
+    ROOT,
+    MIDDLE,
+    EDGE,
+    CORNER
+
+} __attribute__ ((packed)) voxel_type_t;
+
+typedef enum material { 
+
+    UNKNOWN, 
+    HARD, 
+    SOFT, 
+    EXPAND, 
+    CONTRACT 
+
+} __attribute__ ((packed)) material_t;
 
 /*
  * struct Voxel: contains type indicator and position in voxel space
  */
 typedef struct Voxel {
 
-    int type;
-    int pos_x;
-    int pos_y;
-    int pos_z;
+    voxel_type_t type;
+    int position[3];
     int exists;
+    material_t material;
     
-} __attribute__ ((aligned)) Voxel;
+} Voxel;
 
 /*
  * struct Voxel_space: contains array of voxels and the overall fitness
@@ -46,25 +66,50 @@ typedef struct Voxel {
 typedef struct Voxel_space {
 
     Voxel* tree;
+    int num_voxels;
     float fitness;
 
-} __attribute__ ((aligned)) Voxel_space;
+} Voxel_space;
 
 /*
  * given a depth of a tree, returns the total number of voxels in that tree
  */
-static inline int total_voxels_at_depth(int depth) {
+static inline int total_voxels_at_depth(const int depth) {
     return ipow(2*depth + 1, 3);
 }
 
-static inline int num_root_at_depth(int depth) { return 1; }
-int num_middle_at_depth(int);
-int num_edge_at_depth(int);
-static inline int num_corner_at_depth(int depth) { return 8*depth; }
+/*
+ * given the index of a voxel, returns its depth in the tree
+ */
+static inline int get_depth_from_index(const int idx) {
+    return ((idx == 0) ? 0 : (int)(ceil(floor(pow(idx, 1/3.)) / 2)));
+}
+
+/*
+ * returns the total number of 'root' voxels in a tree with max depth d
+ */
+static inline int num_root_at_depth(const int d) { return 1; }
+
+int num_middle_at_depth(const int);
+int num_edge_at_depth(const int);
+
+/*
+ * returns the total number of 'corner' voxels in a tree with max depth d
+ */
+static inline int num_corner_at_depth(const int d) { return 8*d; }
 
 void init_voxel_space(Voxel_space*);
 void init_3x3(Voxel*);
-void add_remaining_voxels(Voxel*);
+void init_children_of_index(Voxel*, const int);
+void init_c_children(Voxel*, const int);
+void init_e_children(Voxel*, const int);
+void init_m_child   (Voxel*, const int);
+void init_m_positions(Voxel*, const int, int*, const int);
+void init_e_positions(Voxel*, const int, int*, const int);
+
+void get_sorted_indices(int*, int*);
+
+void delete_voxel_space(Voxel_space*);
 
 #endif
 
