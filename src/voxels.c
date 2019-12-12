@@ -58,8 +58,6 @@ int num_edge_at_depth(const int d) {
  */
 void init_voxel_space(Voxel_space* vs) {
 
-    printf("start init voxel space\n");
-    
     //vs = malloc(sizeof(Voxel_space));
     //CHECK_MALLOC_ERR(vs);
 
@@ -72,8 +70,6 @@ void init_voxel_space(Voxel_space* vs) {
     }
 
     vs->num_voxels = 1;
-
-    printf("end init voxel space\n");
 }
 
 /*
@@ -82,8 +78,6 @@ void init_voxel_space(Voxel_space* vs) {
  * children
  */
 void init_3x3(Voxel* tree) {
-
-    printf("start init 3x3\n");
 
     int start, stop;
     int m_positions[] = { 0,0,1, 1,0,0, 0,1,0, -1,0,0, 0,-1,0, 0,0,-1 };
@@ -136,7 +130,6 @@ void init_3x3(Voxel* tree) {
         tree[i+start].material = UNKNOWN;
     }
 
-    printf("end init 3x3\n");
 }
 
 /*
@@ -214,10 +207,6 @@ void init_c_children(Voxel* tree, const int parent_idx) {
                         - 3*(total_voxels_at_depth(parent_depth) - parent_idx)
                         + i;
 
-        if (e_children[i] >= 299 && e_children[i] <= 310)
-            printf("!!!! i=%d !!!!\n", i);
-
-
         tree[e_children[i]].type = EDGE;
         tree[e_children[i]].exists = 0;
         tree[e_children[i]].material = UNKNOWN;
@@ -264,9 +253,6 @@ void init_e_children(Voxel* tree, const int parent_idx) {
                             - num_middle_at_depth(parent_depth - 1))
                         - total_voxels_at_depth(parent_depth - 1);
         
-        if (e_children[i] >= 299 && e_children[i] <= 310)
-            printf("!!!! i=%d !!!!\n", i);
-
         tree[e_children[i]].type = EDGE;
         tree[e_children[i]].exists = 0;
         tree[e_children[i]].material = UNKNOWN;
