@@ -67,10 +67,9 @@ void init_voxel_space(Voxel_space* vs) {
     CHECK_MALLOC_ERR(vs->tree);
 
     init_3x3(vs->tree);
-    /*
     for (int i=0; i<total_voxels_at_depth(VOX_SPACE_MAX_DEPTH-1); i++) {
         init_children_of_index(vs->tree, i);
-    }*/
+    }
 
     vs->num_voxels = 1;
 
@@ -104,37 +103,37 @@ void init_3x3(Voxel* tree) {
     // 'middle' voxels change the position in one dimension:
     start = NUM_R_3X3;
     stop = NUM_R_3X3 + NUM_M_3X3;
-    for (int i=start; i<stop; i++) {
-        tree[i].type = MIDDLE;
-        tree[i].position[0] = m_positions[3*i+0];
-        tree[i].position[1] = m_positions[3*i+1];
-        tree[i].position[2] = m_positions[3*i+2];
-        tree[i].exists = 0;
-        tree[i].material = UNKNOWN;
+    for (int i=0; i<(stop-start); i++) {
+        tree[i+start].type = MIDDLE;
+        tree[i+start].position[0] = m_positions[3*i+0];
+        tree[i+start].position[1] = m_positions[3*i+1];
+        tree[i+start].position[2] = m_positions[3*i+2];
+        tree[i+start].exists = 0;
+        tree[i+start].material = UNKNOWN;
     }
     
     // 'edge' voxels change the position in two dimensions:
     start = stop;
     stop += NUM_E_3X3;
-    for (int i=start; i<stop; i++) {
-        tree[i].type = EDGE;
-        tree[i].position[0] = e_positions[3*i+0];
-        tree[i].position[1] = e_positions[3*i+1];
-        tree[i].position[2] = e_positions[3*i+2];
-        tree[i].exists = 0;
-        tree[i].material = UNKNOWN;
+    for (int i=0; i<(stop-start); i++) {
+        tree[i+start].type = EDGE;
+        tree[i+start].position[0] = e_positions[3*i+0];
+        tree[i+start].position[1] = e_positions[3*i+1];
+        tree[i+start].position[2] = e_positions[3*i+2];
+        tree[i+start].exists = 0;
+        tree[i+start].material = UNKNOWN;
     }
 
     // 'corner' voxels change the position in three dimensions
     start = stop;
     stop += NUM_C_3X3;
-    for (int i=start; i<stop; i++) {
-        tree[i].type = CORNER;
-        tree[i].position[0] = c_positions[3*i+0];
-        tree[i].position[1] = c_positions[3*i+1];
-        tree[i].position[2] = c_positions[3*i+2];
-        tree[i].exists = 0;
-        tree[i].material = UNKNOWN;
+    for (int i=0; i<(stop-start); i++) {
+        tree[i+start].type = CORNER;
+        tree[i+start].position[0] = c_positions[3*i+0];
+        tree[i+start].position[1] = c_positions[3*i+1];
+        tree[i+start].position[2] = c_positions[3*i+2];
+        tree[i+start].exists = 0;
+        tree[i+start].material = UNKNOWN;
     }
 
     printf("end init 3x3\n");
@@ -160,7 +159,6 @@ void init_children_of_index(Voxel* tree, const int parent_idx) {
             break;
 
         case ROOT:
-            init_3x3(tree);
             break;
     }
 
@@ -215,6 +213,11 @@ void init_c_children(Voxel* tree, const int parent_idx) {
                         - num_edge_at_depth(parent_depth)
                         - 3*(total_voxels_at_depth(parent_depth) - parent_idx)
                         + i;
+
+        if (e_children[i] >= 299 && e_children[i] <= 310)
+            printf("!!!! i=%d !!!!\n", i);
+
+
         tree[e_children[i]].type = EDGE;
         tree[e_children[i]].exists = 0;
         tree[e_children[i]].material = UNKNOWN;
@@ -258,8 +261,12 @@ void init_e_children(Voxel* tree, const int parent_idx) {
                         - num_middle_at_depth(parent_depth)
                         + parent_idx
                         - (num_middle_at_depth(parent_depth)
-                            + num_middle_at_depth(parent_depth - 1))
+                            - num_middle_at_depth(parent_depth - 1))
                         - total_voxels_at_depth(parent_depth - 1);
+        
+        if (e_children[i] >= 299 && e_children[i] <= 310)
+            printf("!!!! i=%d !!!!\n", i);
+
         tree[e_children[i]].type = EDGE;
         tree[e_children[i]].exists = 0;
         tree[e_children[i]].material = UNKNOWN;
@@ -271,7 +278,7 @@ void init_e_children(Voxel* tree, const int parent_idx) {
 void init_m_child(Voxel* tree, const int parent_idx) {
 
     int parent_depth = get_depth_from_index(parent_idx);
-
+    
     // 1 m child:
     int* m_child = malloc(sizeof(int));
     *m_child = total_voxels_at_depth(parent_depth)
@@ -344,10 +351,6 @@ void init_e_positions(Voxel* tree,
  */
 void get_sorted_indices(int* position, int* sorted_indices) {
 
-    for (int i=0; i<3; i++) {
-        printf("%d: %d\n", i, position[i]);
-    }
-        
     int pos_abs[3] = { abs(position[0]), abs(position[1]), abs(position[2]) };
 
     if (pos_abs[0] == pos_abs[1] && pos_abs[0] == pos_abs[2]) {

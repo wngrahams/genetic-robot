@@ -1,5 +1,5 @@
-CC  = clang
-CXX = clang++
+CC  = gcc
+CXX = g++
 
 INCLUDES = 
 
@@ -7,7 +7,7 @@ CFLAGS   = -O0 -g -Wall $(INCLUDES)
 CXXFLAGS = -O0 -g -Wall $(INCLUDES)
 
 LDFLAGS = -g 
-LDLIBS  = 
+LDLIBS  = -lm 
 
 executables = driver
 objects = driver.o ga-utils.o voxels.o
