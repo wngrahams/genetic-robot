@@ -9,6 +9,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+#ifdef __GNUC__
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+#else
+#define likely(x)       (x)
+#define unlikely(x)     (x)
+#endif
 
 #define MAX(a,b) \
    ({ __typeof__ (a) _a = (a); \
@@ -21,7 +30,7 @@
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
 
 
-#define CHECK_MALLOC_ERR(ptr) ((!check_malloc_err(ptr)) ? (exit(1)) : (1))
+#define CHECK_MALLOC_ERR(ptr) (likely(!check_malloc_err(ptr)) ? (exit(1)) : (1))
 
 
 /*

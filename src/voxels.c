@@ -52,14 +52,11 @@ int num_edge_at_depth(const int d) {
 
 /*
  * Initializes the entire voxel space over VOX_SPACE_MAX_DEPTH.
- * Allocates memory for the Voxel_space struct and the Voxel* array it contains.
+ * Allocates memory for the Voxel* array that the Voxel_space contains.
  * Initializes all voxels' exists = 0 except for the root voxel.
  * Initializes all materials to UNKNOWN.
  */
 void init_voxel_space(Voxel_space* vs) {
-
-    //vs = malloc(sizeof(Voxel_space));
-    //CHECK_MALLOC_ERR(vs);
 
     vs->tree = malloc(sizeof(Voxel)*total_voxels_at_depth(VOX_SPACE_MAX_DEPTH));
     CHECK_MALLOC_ERR(vs->tree);
@@ -162,13 +159,8 @@ void init_children_of_index(Voxel* tree, const int parent_idx) {
  */
 void init_c_children(Voxel* tree, const int parent_idx) {
 
-    int parent_depth = get_depth_from_index(parent_idx);
-
     // 1 c child:
-    int c_idx = total_voxels_at_depth(parent_depth+1)
-                - total_voxels_at_depth(parent_depth)
-                + parent_idx;
-
+    int c_idx = get_child_index_of_c(parent_idx, CORNER, 0);
     tree[c_idx].type = CORNER;
 
     for (int i=0; i<3; i++) {
@@ -183,11 +175,7 @@ void init_c_children(Voxel* tree, const int parent_idx) {
     int* m_children = malloc(sizeof(int) * 3);
     CHECK_MALLOC_ERR(m_children);
     for (int i=0; i<3; i++) {
-        m_children[i] = total_voxels_at_depth(parent_depth)
-                      + num_middle_at_depth(parent_depth + 1) 
-                      - num_middle_at_depth(parent_depth)
-                      - 3*(total_voxels_at_depth(parent_depth) - parent_idx)
-                      + i;
+        m_children[i] = get_child_index_of_c(parent_idx, MIDDLE, i);
         tree[m_children[i]].type = MIDDLE;
         tree[m_children[i]].exists = 0;
         tree[m_children[i]].material = UNKNOWN;
@@ -199,14 +187,7 @@ void init_c_children(Voxel* tree, const int parent_idx) {
     int* e_children = malloc(sizeof(int) * 3);
     CHECK_MALLOC_ERR(e_children);
     for (int i=0; i<3; i++) {
-        e_children[i] = total_voxels_at_depth(parent_depth)
-                        + num_middle_at_depth(parent_depth + 1)
-                        - num_middle_at_depth(parent_depth)
-                        + num_edge_at_depth(parent_depth + 1)
-                        - num_edge_at_depth(parent_depth)
-                        - 3*(total_voxels_at_depth(parent_depth) - parent_idx)
-                        + i;
-
+        e_children[i] = get_child_index_of_c(parent_idx, EDGE, i);
         tree[e_children[i]].type = EDGE;
         tree[e_children[i]].exists = 0;
         tree[e_children[i]].material = UNKNOWN;
@@ -220,20 +201,11 @@ void init_c_children(Voxel* tree, const int parent_idx) {
  */
 void init_e_children(Voxel* tree, const int parent_idx) {
     
-    int parent_depth = get_depth_from_index(parent_idx);
-
     // 2 m children:
     int* m_children = malloc(sizeof(int) * 2);
     CHECK_MALLOC_ERR(m_children);
     for (int i=0; i<2; i++) {
-        m_children[i] = total_voxels_at_depth(parent_depth)
-                        + num_middle_at_depth(parent_depth)
-                        - num_middle_at_depth(parent_depth - 1)
-                        + 2*(parent_idx 
-                            - (num_middle_at_depth(parent_depth)
-                                - num_middle_at_depth(parent_depth - 1))
-                            - total_voxels_at_depth(parent_depth - 1))
-                        + i;
+        m_children[i] = get_child_index_of_e(parent_idx, MIDDLE, i);
         tree[m_children[i]].type = MIDDLE;
         tree[m_children[i]].exists = 0;
         tree[m_children[i]].material = UNKNOWN;
@@ -242,34 +214,23 @@ void init_e_children(Voxel* tree, const int parent_idx) {
     free(m_children);
 
     // 1 e child:
-    int* e_children = malloc(sizeof(int));
-    CHECK_MALLOC_ERR(e_children);
+    int* e_child = malloc(sizeof(int));
+    CHECK_MALLOC_ERR(e_child);
     for (int i=0; i<1; i++) {
-        e_children[i] = total_voxels_at_depth(parent_depth)
-                        + num_middle_at_depth(parent_depth + 1)
-                        - num_middle_at_depth(parent_depth)
-                        + parent_idx
-                        - (num_middle_at_depth(parent_depth)
-                            - num_middle_at_depth(parent_depth - 1))
-                        - total_voxels_at_depth(parent_depth - 1);
-        
-        tree[e_children[i]].type = EDGE;
-        tree[e_children[i]].exists = 0;
-        tree[e_children[i]].material = UNKNOWN;
+        *e_child = get_child_index_of_e(parent_idx, EDGE, 0);        
+        tree[*e_child].type = EDGE;
+        tree[*e_child].exists = 0;
+        tree[*e_child].material = UNKNOWN;
     }
-    init_e_positions(tree, parent_idx, e_children, 1);
-    free(e_children);
+    init_e_positions(tree, parent_idx, e_child, 1);
+    free(e_child);
 }
 
 void init_m_child(Voxel* tree, const int parent_idx) {
 
-    int parent_depth = get_depth_from_index(parent_idx);
-    
     // 1 m child:
     int* m_child = malloc(sizeof(int));
-    *m_child = total_voxels_at_depth(parent_depth)
-               - total_voxels_at_depth(parent_depth - 1)
-               + parent_idx;
+    *m_child = get_child_index_of_m(parent_idx);
     tree[*m_child].type = MIDDLE;
     tree[*m_child].exists = 0;
     tree[*m_child].material = UNKNOWN;
@@ -372,4 +333,120 @@ void delete_voxel_space(Voxel_space* vs) {
     free(vs->tree);
     free(vs);
 }
+
+/*
+ * Get the index of the child of a 'middle' voxel at index parent_idx. 'Middle'
+ * voxels only have one child.
+ */
+int get_child_index_of_m(const int parent_idx) {
+
+    int retval;
+    int parent_depth = get_depth_from_index(parent_idx);
+
+    retval = total_voxels_at_depth(parent_depth)
+             - total_voxels_at_depth(parent_depth - 1)
+             + parent_idx;
+
+    return retval;
+}
+
+/*
+ * Get the index of one of the children of an 'edge' voxel at index parent_idx.
+ * Specify the type of child with child_type, and for m children specify
+ * which specific one with child_num
+ */
+int get_child_index_of_e(const int parent_idx, 
+                         const voxel_type child_type,
+                         const int child_num) {
+
+    int retval = -1;
+    if (unlikely(child_num < 0 || child_num >= 2))
+        goto done;
+
+    int parent_depth = get_depth_from_index(parent_idx);
+
+    switch(child_type) {
+
+        case MIDDLE:
+            retval = total_voxels_at_depth(parent_depth)
+                     + num_middle_at_depth(parent_depth) 
+                     - num_middle_at_depth(parent_depth - 1)
+                     + 2*(parent_idx 
+                         - (num_middle_at_depth(parent_depth)
+                             - num_middle_at_depth(parent_depth - 1))
+                         - total_voxels_at_depth(parent_depth - 1))
+                     + child_num;            
+            break;
+
+        case EDGE:
+            retval = total_voxels_at_depth(parent_depth)
+                     + num_middle_at_depth(parent_depth + 1)
+                     - num_middle_at_depth(parent_depth)
+                     + parent_idx
+                     - (num_middle_at_depth(parent_depth)
+                         - num_middle_at_depth(parent_depth - 1))
+                     - total_voxels_at_depth(parent_depth - 1);            
+            break;
+
+        default:
+            retval = -1;
+            break;
+    }
+
+done:
+    return retval;
+}
+
+
+
+/*
+ * Get the index of one of the children of a 'corner' voxel at index parent_idx.
+ * Specify the type of child with child_type, and for m and e children specify
+ * which specific one with child_num
+ */
+int get_child_index_of_c(const int parent_idx, 
+                         const voxel_type child_type,
+                         const int child_num) {
+
+    int retval = -1;
+    if (unlikely(child_num < 0 || child_num >= 3))
+        goto done;
+
+    int parent_depth = get_depth_from_index(parent_idx);
+
+    switch(child_type) {
+
+        case MIDDLE:
+            retval = total_voxels_at_depth(parent_depth)
+                     + num_middle_at_depth(parent_depth + 1) 
+                     - num_middle_at_depth(parent_depth)
+                     - 3*(total_voxels_at_depth(parent_depth) - parent_idx)
+                     + child_num;
+            break;
+
+        case EDGE:
+            retval = total_voxels_at_depth(parent_depth)
+                     + num_middle_at_depth(parent_depth + 1)
+                     - num_middle_at_depth(parent_depth)
+                     + num_edge_at_depth(parent_depth + 1)
+                     - num_edge_at_depth(parent_depth)
+                     - 3*(total_voxels_at_depth(parent_depth) - parent_idx)
+                     + child_num;
+            break;
+
+        case CORNER:
+            retval = total_voxels_at_depth(parent_depth+1)
+                     - total_voxels_at_depth(parent_depth)
+                     + parent_idx;
+            break;
+        
+        default:
+            retval = -1;
+            break;
+    }
+
+done:
+    return retval;
+}
+
 

@@ -17,7 +17,7 @@
 #define DEPTH_9X9   4
 #define DEPTH_11X11 5
 
-#define VOX_SPACE_MAX_DEPTH DEPTH_5X5  // Must be at least (3x3)
+#define VOX_SPACE_MAX_DEPTH DEPTH_11X11  // Must be at least (3x3)
 
 #define NUM_R_3X3 1
 #define NUM_M_3X3 6
@@ -26,8 +26,9 @@
 
 #define INIT_VOXEL_SPACE(name) \
     Voxel_space* name = malloc(sizeof(Voxel_space)); \
-    CHECK_MALLOC_ERR(name); \
-    init_voxel_space(name); 
+    CHECK_MALLOC_ERR((name)); \
+    init_voxel_space((name)); 
+
 
 typedef enum voxel_type {
 
@@ -36,7 +37,7 @@ typedef enum voxel_type {
     EDGE,
     CORNER
 
-} __attribute__ ((packed)) voxel_type_t;
+} __attribute__ ((packed)) voxel_type;
 
 typedef enum material { 
 
@@ -53,7 +54,7 @@ typedef enum material {
  */
 typedef struct Voxel {
 
-    voxel_type_t type;
+    voxel_type type;
     int position[3];
     int exists;
     material_t material;
@@ -114,6 +115,10 @@ void init_e_positions(Voxel*, const int, int*, const int);
 void get_sorted_indices(int*, int*);
 
 void delete_voxel_space(Voxel_space*);
+
+int get_child_index_of_m(const int);
+int get_child_index_of_e(const int, const voxel_type, const int);
+int get_child_index_of_c(const int, const voxel_type, const int);
 
 #endif
 
