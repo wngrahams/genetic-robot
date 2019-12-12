@@ -17,7 +17,7 @@
 #define DEPTH_9X9   4
 #define DEPTH_11X11 5
 
-#define VOX_SPACE_MAX_DEPTH DEPTH_5X5  // Must be at least (3x3)
+#define VOX_SPACE_MAX_DEPTH DEPTH_11X11  // Must be at least (3x3)
 
 #define NUM_R_3X3 1
 #define NUM_M_3X3 6
@@ -82,7 +82,11 @@ static inline int total_voxels_at_depth(const int depth) {
  * given the index of a voxel, returns its depth in the tree
  */
 static inline int get_depth_from_index(const int idx) {
-    return ((idx == 0) ? 0 : (int)(ceil(floor(pow(idx, 1/3.)) / 2)));
+
+    // this sucks, but without adding 0.000001, casting 5.0 to and int returns 
+    // 4 for some reason
+    int retval = (idx == 0) ? 0 : ceil(((int)((pow(idx, 1/3.)+0.000001))+0.0)/2.);
+    return retval; 
 }
 
 /*
