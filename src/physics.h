@@ -9,6 +9,10 @@
 #include "ga-utils.h"
 #include "voxels.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_MASSES_PER_VOXEL 8
 #define MAX_SPRINGS_PER_VOXEL 28
 
@@ -48,15 +52,15 @@ void init_masses_and_springs_from_voxel_space(Mass**,
                                               Voxel_space*);
 int get_total_possible_masses();
 int get_total_possible_springs(); 
-void dfs_init(Voxel_space*, 
-              const int, 
-              Mass**, 
-              Spring**, 
-              const int, 
-              const int,
-              int*,
-              int*);
+void dfs_init_masses(Voxel_space*, 
+                     const int, 
+                     Mass**, 
+                     const int, 
+                     int*);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

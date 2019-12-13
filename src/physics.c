@@ -23,14 +23,11 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
     int masses_per_dim = max_num_masses/3;
     int springs_per_dim = max_num_springs/3;
 
-    dfs_init(vs,
-             0, 
-             masses, 
-             springs, 
-             masses_per_dim, 
-             springs_per_dim,
-             mass_count,
-             spring_count);
+    dfs_init_masses(vs,
+                    0, 
+                    masses, 
+                    masses_per_dim, 
+                    mass_count);
 
     for (int i=0; i<vs->num_voxels; i++) {
 
@@ -59,14 +56,11 @@ int get_total_possible_springs() {
     return inner_springs + face_springs + edge_springs;
 }
 
-void dfs_init(Voxel_space* vs,
-              const int idx, 
-              Mass** masses, 
-              Spring** springs, 
-              const int masses_per_dim, 
-              const int springs_per_dim,
-              int* mass_count,
-              int* spring_count) {
+void dfs_init_masses(Voxel_space* vs,
+                    const int idx, 
+                    Mass** masses, 
+                    const int masses_per_dim, 
+                    int* mass_count) {
 
     if (1 == vs->tree[idx].exists) {
 
@@ -102,20 +96,65 @@ void dfs_init(Voxel_space* vs,
             }  // end y
         }  // end x
 
-        if (ROOT == vs->tree[idx].type) {
+        voxel_type current_type = vs->tree[idx].type;
+
+        if (ROOT == current_type) {
             for (int i=1; i<27; i++) {
-            dfs_init(vs, 
-                     i, 
-                     masses, 
-                     springs, 
-                     masses_per_dim, 
-                     springs_per_dim,
-                     mass_count,
-                     spring_count);
+                dfs_init_masses(vs, 
+                                i, 
+                                masses, 
+                                masses_per_dim, 
+                                mass_count);
             }
         }
 
-    }  // end if v->exists
+        else if (MIDDLE == current_type) {
+            dfs_init_masses(vs, 
+                            get_child_index_of_m(idx), 
+                            masses, 
+                            masses_per_dim, 
+                            mass_count);
+        }
 
-    
+        else if (EDGE == current_type) {
+            for (int i=0; i<2; i++) {
+                dfs_init_masses(vs, 
+                                get_child_index_of_e(idx, MIDDLE, i), 
+                                masses, 
+                                masses_per_dim, 
+                                mass_count);
+            }
+              
+            dfs_init_masses(vs, 
+                            get_child_index_of_e(idx, EDGE, 0), 
+                            masses, 
+                            masses_per_dim, 
+                            mass_count);
+        }
+
+        else if (CORNER == current_type) {
+            for (int i=0; i<3; i++) {
+                dfs_init_masses(vs, 
+                                get_child_index_of_c(idx, MIDDLE, i), 
+                                masses, 
+                                masses_per_dim, 
+                                mass_count);
+            }
+
+            for (int i=0; i<3; i++) {
+                dfs_init_masses(vs, 
+                                get_child_index_of_c(idx, EDGE, i), 
+                                masses, 
+                                masses_per_dim, 
+                                mass_count);
+            }
+
+            dfs_init_masses(vs, 
+                            get_child_index_of_c(idx, CORNER, 0), 
+                            masses, 
+                            masses_per_dim, 
+                            mass_count);
+        }
+
+    }  // end if v->exists 
 }
