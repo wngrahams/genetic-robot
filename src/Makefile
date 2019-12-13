@@ -9,15 +9,15 @@
 # LDFLAGS = -g
 # LDLIBS  = -lm -lstdc++
 #
-# executables = driver
-# objects = driver.o ga-utils.o voxels.o
+# executables = ga
+# objects = ga-utils.o voxels.o ga.o
 #
 # .PHONY: default
 # default: $(executables)
 #
-# $(executables): ga-utils.o voxels.o
+# $(executables): ga-utils.o voxels.o ga.o
 #
-# $(objects): ga-utils.h voxels.h
+# $(objects): ga-utils.h voxels.h ga.hpp
 #
 # .PHONY: clean
 # clean:

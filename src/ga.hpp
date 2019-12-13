@@ -8,6 +8,9 @@
 #define NUM_OF_EVALS 1000
 
 // robot macros
+#define NUM_OF_CENTERS 1
+#define NUM_OF_HOLES 1
+
 #define NUM_OF_MATERIALS 4
 #define NUM_OF_M_CHILD 1
 #define NUM_OF_E_CHILD 3
@@ -18,7 +21,7 @@
 
 void ga_loop();
 void initialize_random_robot(Voxel_space *);
-void update_types(Voxel_space *, const int, material_t);
+void update_mats(Voxel_space *, const int, material_t);
 void update_exists(Voxel_space* , const int, int);
 
 #endif //_GA_H
