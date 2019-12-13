@@ -50,7 +50,6 @@ void ga_loop() {
         // selection
 
     }
-
 }
 
 /*

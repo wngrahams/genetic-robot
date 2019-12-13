@@ -4,5 +4,5 @@
 *.*.swp
 *.supp
 
-src/cmake-build-debug/*
+cmake-build-debug
 .idea
