@@ -293,7 +293,7 @@ void init_e_positions(Voxel* tree,
 }
 
 /*
- * returns the indeces of the position array in decreasing order of the 
+ * returns the indices of the position array in decreasing order of the
  * absolute value of the position in each dimension
  */
 void get_sorted_indices(int* position, int* sorted_indices) {
