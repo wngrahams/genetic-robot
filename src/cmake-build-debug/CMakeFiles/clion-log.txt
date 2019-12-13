@@ -1,0 +1,16 @@
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" "/Users/Jarrett/Desktop/School stuff/F'19/Evolutionary Computation & Design Automation/walking-robot/src"
+-- Configuring done
+CMake Error at CMakeLists.txt:3 (add_executable):
+  Cannot find source file:
+
+    ga.c
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm
+  .hpp .hxx .in .txx
+
+
+CMake Error at CMakeLists.txt:3 (add_executable):
+  No SOURCES given to target: genetic-algorithm
+
+
+CMake Generate step failed.  Build files cannot be regenerated correctly.

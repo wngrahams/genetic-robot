@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/cc -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/genetic-algorithm.dir/ga-utils.c.o CMakeFiles/genetic-algorithm.dir/voxels.c.o  -o genetic-algorithm 
