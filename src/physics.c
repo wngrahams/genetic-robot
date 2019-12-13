@@ -3,6 +3,8 @@
  *
  */
 
+#include <assert.h>
+
 #include "physics.h"
 
 void init_masses_and_springs_from_voxel_space(Mass** masses, 
@@ -20,7 +22,10 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
         springs[i] = NULL;
     }
 
-    int masses_per_dim = ipow((VOX_SPACE_MAX_DEPTH+1)*2, 2);
+    printf("max_num_masses: %d\n", max_num_masses);
+    printf("max_num_springs: %d\n", max_num_springs);
+
+    int masses_per_dim = (VOX_SPACE_MAX_DEPTH+1)*2;
 
     dfs_init_masses(vs,
                     0, 
@@ -28,17 +33,12 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
                     masses_per_dim, 
                     mass_count);
 
+
     init_springs(springs, masses, spring_count, max_num_masses, masses_per_dim);
+    printf("mass count: %d\n", *mass_count);
+    printf("spring count: %d\n", *spring_count);
     assert(*spring_count <= max_num_springs);
 
-    for (int i=0; i<vs->num_voxels; i++) {
-
-
-        for (int j=0; j<MAX_MASSES_PER_VOXEL; j++) {
-
-
-        }
-    }
 }
 
 int get_total_possible_masses(const int depth) {
@@ -52,7 +52,7 @@ int get_total_possible_springs(const int depth) {
     int dimension = (depth + 1) * 2;
 
     int inner_springs = 4 * total_voxels_at_depth(depth);
-    int face_springs = 2 * dimension * ipow(dimension-1, 2);
+    int face_springs = 3 * dimension * ipow(dimension-1, 2);
     int edge_springs = 3 * (dimension - 1) * ipow(dimension, 2);
 
     return inner_springs + face_springs + edge_springs;
@@ -75,6 +75,8 @@ void dfs_init_masses(Voxel_space* vs,
                         + ipow(masses_per_dim, 2)
                             *(vs->tree[idx].pos[2]+HEIGHT_OFFSET+z);
 
+                    //printf("calculated mass idx: %d\n", mass_idx);
+
                     if (masses[mass_idx] == NULL) {
 
 						(*mass_count)++;
@@ -83,9 +85,9 @@ void dfs_init_masses(Voxel_space* vs,
             			masses[mass_idx]->m = MASS_M;
             			masses[mass_idx]->pos[0] = 
                             (vs->tree[idx].pos[0]+HEIGHT_OFFSET+x+0.0) * L0_SIDE;
-						masses[mass_idx]->pos[0] = 
+						masses[mass_idx]->pos[1] = 
                             (vs->tree[idx].pos[1]+HEIGHT_OFFSET+y+0.0) * L0_SIDE;
-						masses[mass_idx]->pos[0] = 
+						masses[mass_idx]->pos[2] = 
                             (vs->tree[idx].pos[2]+HEIGHT_OFFSET+z+0.0) * L0_SIDE;
 
             			for (int i=0; i<3; i++) {
@@ -174,25 +176,57 @@ void init_springs(Spring** springs,
 
     for (int i=0; i<max_num_masses; i++) {
         if (NULL != masses[i]) {
+
+            printf("making a spring for mass: %d\n", i);
             for (int x=0; x<2; x++) {
-                for (int y=0; y<2; y++) {
-                    for (int z=0; z<2; z++) {
+                for (int y=-1; y<2; y++) {
+                    for (int z=-1; z<2; z++) {
 
                         // dont connect a mass to itself
-                        if (x != 0 || y != 0 || z != 0) {
+                        if ((x == 1) 
+                            || (x == 0 && y == 1) 
+                            || (x == 0 && y == 0 && z == 1)) {
+                            
+                            printf("(x, y, z): (%d, %d, %d)\n", x, y, z);
                             
                             int neighbor_idx = i 
                                 + x 
                                 + y * masses_per_dim
                                 + z * ipow(masses_per_dim, 2);
 
-                            if (neighbor_idx < max_num_masses
+                            printf("neighbor idx: %d\n", neighbor_idx);
+
+                            if (neighbor_idx >= 0
+                                && neighbor_idx < max_num_masses
                                 && NULL != masses[neighbor_idx]) {
+
+                                // this prevents us from accidentally wrapping 
+                                // around:
+                                for (int j=0; j<3; j++) {
+
+                                    if (fabsf(masses[i]->pos[j] 
+                                              - masses[neighbor_idx]->pos[j])
+                                        > (L0_SIDE + 0.0001f)) {
+
+                                        goto loop_end; 
+                                    }  // end if fabsf
+                                }  // end loop
+
 
                                 springs[*num_springs] = malloc(sizeof(Spring));
 
                                 springs[*num_springs]->m1 = i;
                                 springs[*num_springs]->m2 = neighbor_idx;
+
+                                printf("connecting spring from %d ", i);
+                                printf("(%.2f, %.2f, %.2f)", masses[i]->pos[0],
+                                       masses[i]->pos[1], masses[i]->pos[2]);
+                                printf(" to %d ", neighbor_idx);
+                                printf("(%.2f, %.2f, %.2f)\n", 
+                                       masses[neighbor_idx]->pos[0],
+                                       masses[neighbor_idx]->pos[1], 
+                                       masses[neighbor_idx]->pos[2]);
+
 
                                 float avg_k = 
                                     (material_to_k_map[masses[i]->material]
@@ -227,12 +261,14 @@ void init_springs(Spring** springs,
                                 springs[*num_springs]->c = avg_c;
 
                                 (*num_springs)++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+
+loop_end: ;
+                            }  // end if neighbor_idx >=0
+                        }  // end if x == 1
+                    }  // end z loop
+                }  // end y loop
+            }  // end x loop
+        }  // end if not null
+    }  // end for each mass
+}  // end function
 
