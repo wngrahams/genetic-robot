@@ -29,16 +29,48 @@ void ga_loop() {
     // declare variables
     int max_robot_size = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
     // create initial parent population
-    Voxel_space parent[POP_SIZE];
+    Voxel_space* parent[POP_SIZE];
     for (int i = 0; i < POP_SIZE; i++) {
         INIT_VOXEL_SPACE(temp);
-        parent[i] = *temp;
+        parent[i] = temp;
     }
 
+    for (int i=0; i<POP_SIZE; i++) {
+        printf("individual %d:\n", i);
+        for (int j=0; j<max_robot_size; j++) {
+            printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
+                   j,
+                   parent[i]->tree[j].position[0],
+                   parent[i]->tree[j].position[1],
+                   parent[i]->tree[j].position[2],
+                   parent[i]->tree[j].exists,
+                   parent[i]->tree[j].material,
+                   parent[i]->tree[j].type);
+
+        }
+        printf("\n");
+    }
+    
     // randomize initial population
     for (int i = 0; i < POP_SIZE; i++) {
-        printf("%d: %d\n", i, parent[0].tree[i].type);
-        initialize_random_robot(&parent[i]);
+        //printf("%d: %d\n", i, parent[0].tree[i].type);
+        initialize_random_robot(parent[i]);
+    }
+
+    for (int i=0; i<POP_SIZE; i++) {
+        printf("individual %d:\n", i);
+        for (int j=0; j<max_robot_size; j++) {
+            printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
+                   j,
+                   parent[i]->tree[j].position[0],
+                   parent[i]->tree[j].position[1],
+                   parent[i]->tree[j].position[2],
+                   parent[i]->tree[j].exists,
+                   parent[i]->tree[j].material,
+                   parent[i]->tree[j].type);
+
+        }
+        printf("\n");
     }
 
     // genetic algorithm loop
@@ -54,6 +86,12 @@ void ga_loop() {
 //    for (int i = 0; i < POP_SIZE; i++) {
 //        delete_voxel_space(&parent[i]);
 //    }
+
+
+    // clean up:
+    for (int i=0; i<POP_SIZE; i++) {
+        delete_voxel_space(parent[i]);
+    }
 }
 
 /*
@@ -63,7 +101,7 @@ void initialize_random_robot(Voxel_space *individual) {
 
     // number of nodes in tree in Voxel_space
     int max_robot_size = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
-    std::cout << "max vox: " << max_robot_size << "\n\n\n\n";
+    std::cout << "max vox: " << max_robot_size << "\n";
 
     for (int i = 0; i < max_robot_size; i++) {
         individual->tree[i].exists = 1;
@@ -73,7 +111,13 @@ void initialize_random_robot(Voxel_space *individual) {
     for (int i = 0; i < NUM_OF_CENTERS; i++) {
         // pick random index and random material
         int center = rand() % max_robot_size;
-        material_t mat = static_cast<material_t>(rand() % (NUM_OF_MATERIALS - 1) + 1);
+        printf("center chosen: %d\n", center);
+
+        material_t mat = 
+            static_cast<material_t>(rand() % (NUM_OF_MATERIALS - 1) + 1);
+
+        printf("material chosen: %d\n", mat);
+
         // update tree accordingly
         update_mats(individual, center, mat);
     }
@@ -86,16 +130,20 @@ void initialize_random_robot(Voxel_space *individual) {
 }
 
 /*
- * update voxel and all of its children with specified type
+ * update voxel and all of its children with specified material
  */
 void update_mats(Voxel_space* vs, const int idx, material_t mat) {
 
-    std::cout << idx << " type: " << vs->tree[idx].type << "\n";
-    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) { std::cout << "HEY\n"; return; };
-
-    for (int i = 0; i < total_voxels_at_depth(VOX_SPACE_MAX_DEPTH); i++) {
-        std::cout << "typE: " << vs->tree[i].type << "\n";
+    //std::cout << idx << " type: " << vs->tree[idx].type << "\n";
+    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) { 
+        //std::cout << "HEY\n"; 
+        return; 
     }
+
+    /*
+    for (int i = 0; i < total_voxels_at_depth(VOX_SPACE_MAX_DEPTH); i++) {
+        //std::cout << "typE: " << vs->tree[i].type << "\n";
+    }*/
 
     // for convenience
     voxel_type current_type = vs->tree[idx].type;
@@ -104,8 +152,8 @@ void update_mats(Voxel_space* vs, const int idx, material_t mat) {
 
     // recursive descent through children
     if (ROOT == current_type) {
-        for (int i=1; i<26; i++) {
-            std::cout << i << ": ROOT HIT\n";
+        for (int i=1; i<27; i++) {
+            //std::cout << i << ": ROOT HIT\n";
             update_mats(vs, i, mat);
         }
     } else if (MIDDLE == current_type) {
@@ -131,7 +179,10 @@ void update_mats(Voxel_space* vs, const int idx, material_t mat) {
  */
 void update_exists(Voxel_space* vs, const int idx, int exists) {
 
-    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) { std::cout << "EXISTS DONE\n"; return; };
+    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) { 
+        std::cout << "EXISTS DONE\n"; 
+        return; 
+    }
 
     // for convenience
     voxel_type current_type = vs->tree[idx].type;
@@ -140,7 +191,7 @@ void update_exists(Voxel_space* vs, const int idx, int exists) {
 
     // recursive descent through children
     if (ROOT == current_type) {
-        for (int i=1; i<26; i++) {
+        for (int i=1; i<27; i++) {
             update_exists(vs, i, exists);
         }
     } else if (MIDDLE == current_type) {
@@ -160,3 +211,4 @@ void update_exists(Voxel_space* vs, const int idx, int exists) {
         update_exists(vs, get_child_index_of_c(idx, CORNER, 0), exists);
     }
 }
+

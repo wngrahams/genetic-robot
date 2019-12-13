@@ -4,7 +4,7 @@
 #include "voxels.h"
 
 // GA macros
-#define POP_SIZE 1
+#define POP_SIZE 4
 #define NUM_OF_EVALS 1000
 
 // robot macros
