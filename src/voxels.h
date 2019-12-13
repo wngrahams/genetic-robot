@@ -55,7 +55,7 @@ typedef enum material {
 typedef struct Voxel {
 
     voxel_type type;
-    int position[3];
+    int pos[3];
     int exists;
     material_t material;
     

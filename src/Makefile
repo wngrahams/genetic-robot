@@ -10,14 +10,14 @@ LDFLAGS = -g
 LDLIBS  = -lm 
 
 executables = driver
-objects = driver.o ga-utils.o voxels.o
+objects = driver.o ga-utils.o voxels.o physics.o
 
 .PHONY: default
 default: $(executables)
 
-$(executables): ga-utils.o voxels.o 
+$(executables): ga-utils.o voxels.o physics.o
 
-$(objects): ga-utils.h voxels.h
+$(objects): ga-utils.h voxels.h physics.h
 
 .PHONY: clean
 clean:
