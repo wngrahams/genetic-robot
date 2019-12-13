@@ -37,6 +37,16 @@ int main(int argc, char** argv) {
     printf("num springs initialized: %d\n", num_actual_springs);
 
     for (int i=0; i<max_masses; i++) {
+        if (NULL != possible_masses[i]) {
+            printf("mass %d with pos (%.2f, %.2f, %.2f)\n", i,
+                   possible_masses[i]->pos[0],
+                   possible_masses[i]->pos[1],
+                   possible_masses[i]->pos[2]);
+
+        }
+    }
+
+    for (int i=0; i<max_masses; i++) {
         if (NULL != possible_masses[i])
             free(possible_masses[i]);
     }

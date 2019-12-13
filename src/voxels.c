@@ -99,7 +99,7 @@ void init_3x3(Voxel* tree) {
         tree[i+start].pos[0] = m_positions[3*i+0];
         tree[i+start].pos[1] = m_positions[3*i+1];
         tree[i+start].pos[2] = m_positions[3*i+2];
-        tree[i+start].exists = 1;
+        tree[i+start].exists = 0;
         tree[i+start].material = UNKNOWN;
     }
     
@@ -111,7 +111,7 @@ void init_3x3(Voxel* tree) {
         tree[i+start].pos[0] = e_positions[3*i+0];
         tree[i+start].pos[1] = e_positions[3*i+1];
         tree[i+start].pos[2] = e_positions[3*i+2];
-        tree[i+start].exists = 1;
+        tree[i+start].exists = 0;
         tree[i+start].material = UNKNOWN;
     }
 
@@ -123,7 +123,7 @@ void init_3x3(Voxel* tree) {
         tree[i+start].pos[0] = c_positions[3*i+0];
         tree[i+start].pos[1] = c_positions[3*i+1];
         tree[i+start].pos[2] = c_positions[3*i+2];
-        tree[i+start].exists = 1;
+        tree[i+start].exists = 0;
         tree[i+start].material = UNKNOWN;
     }
 
