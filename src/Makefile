@@ -3,8 +3,8 @@ CXX = g++
 
 INCLUDES = 
 
-CFLAGS   = -O0 -g -Wall $(INCLUDES)
-CXXFLAGS = -O0 -g -Wall $(INCLUDES)
+CFLAGS   = -O0 -g -Wall -Werror $(INCLUDES)
+CXXFLAGS = -O0 -g -Wall -Werror $(INCLUDES)
 
 LDFLAGS = -g 
 LDLIBS  = -lm 

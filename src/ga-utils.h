@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define F_PI 3.141592653f
+
 #ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
