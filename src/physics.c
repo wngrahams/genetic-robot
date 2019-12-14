@@ -51,11 +51,17 @@ int get_total_possible_springs(const int depth) {
 
     int dimension = (depth + 1) * 2;
 
-    int inner_springs = 4 * total_voxels_at_depth(depth);
-    int face_springs = 3 * dimension * ipow(dimension-1, 2);
-    int edge_springs = 3 * (dimension - 1) * ipow(dimension, 2);
+    int inner_crossing_springs = 4 * total_voxels_at_depth(depth);
+    int horizontal_springs = dimension * (2*dimension*(dimension-1) 
+                                          + 2*(dimension-1)*(dimension-1));
+    int vertical_springs = (dimension-1) * ((dimension*dimension)
+                                            + (2*dimension*(dimension-1)*2));
+    /*
+    int face_crossing_springs = 2 * dimension * (dimension-1)
+            3 * dimension * ipow(dimension-1, 2);
+    int edge_springs = 3 * (dimension - 1) * ipow(dimension, 2);*/
 
-    return inner_springs + face_springs + edge_springs;
+    return inner_crossing_springs + horizontal_springs + vertical_springs;
 }
 
 void dfs_init_masses(Voxel_space* vs,
@@ -64,7 +70,8 @@ void dfs_init_masses(Voxel_space* vs,
                     const int masses_per_dim, 
                     int* mass_count) {
 
-    if (1 == vs->tree[idx].exists) {
+    if (idx < total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)
+        && 1 == vs->tree[idx].exists) {
 
         for (int x=0; x<2; x++) {
             for (int y=0; y<2; y++) {
@@ -187,14 +194,14 @@ void init_springs(Spring** springs,
                             || (x == 0 && y == 1) 
                             || (x == 0 && y == 0 && z == 1)) {
                             
-                            printf("(x, y, z): (%d, %d, %d)\n", x, y, z);
+                            //printf("(x, y, z): (%d, %d, %d)\n", x, y, z);
                             
                             int neighbor_idx = i 
                                 + x 
                                 + y * masses_per_dim
                                 + z * ipow(masses_per_dim, 2);
 
-                            printf("neighbor idx: %d\n", neighbor_idx);
+                            //printf("neighbor idx: %d\n", neighbor_idx);
 
                             if (neighbor_idx >= 0
                                 && neighbor_idx < max_num_masses
@@ -214,6 +221,7 @@ void init_springs(Spring** springs,
 
 
                                 springs[*num_springs] = malloc(sizeof(Spring));
+                                CHECK_MALLOC_ERR(springs[*num_springs]);
 
                                 springs[*num_springs]->m1 = i;
                                 springs[*num_springs]->m2 = neighbor_idx;

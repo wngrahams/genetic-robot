@@ -19,9 +19,11 @@ int main(int argc, char** argv) {
     
     int max_masses = get_total_possible_masses(VOX_SPACE_MAX_DEPTH);
     Mass** possible_masses = malloc(sizeof(Mass*) * max_masses);
+    CHECK_MALLOC_ERR(possible_masses);
 
     int max_springs = get_total_possible_springs(VOX_SPACE_MAX_DEPTH);
     Spring** possible_springs = malloc(sizeof(Spring*) * max_springs);
+    CHECK_MALLOC_ERR(possible_springs);
 
     int num_actual_masses = 0;
     int num_actual_springs = 0;
