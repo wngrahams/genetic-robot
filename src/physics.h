@@ -6,6 +6,8 @@
 #ifndef __PHYSICS_H__
 #define __PHYSICS_H__
 
+#include <assert.h>
+
 #include "ga-utils.h"
 #include "voxels.h"
 
@@ -89,7 +91,8 @@ void dfs_init_masses(Voxel_space*,
                      int*);
 void init_springs(Spring**, Mass**, int*, const int, const int);
 
-static inline float get_b_from_mat(const int mat, const int l0) {
+static inline float get_b_from_mat(const int mat, const float l0) {
+    assert(mat >=0 && mat < NUM_MATERIALS);
     return l0*material_to_b_map[mat];
 }
 

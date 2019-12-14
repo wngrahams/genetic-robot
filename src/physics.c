@@ -248,6 +248,13 @@ void init_springs(Spring** springs,
                                     get_b_from_mat(masses[neighbor_idx]->material,
                                                    springs[*num_springs]->l0);
                                 avg_b = (b1 + b2)/2.0f;
+
+                                printf("i: %d\n", i); 
+                                printf("mat1: %d, mat2: %d\n",
+                                        masses[i]->material, 
+                                        masses[neighbor_idx]->material);
+                                printf("b1: %.2f, b2: %.2f, bavg: %.2f\n",
+                                        b1, b2, avg_b);
             
                                 springs[*num_springs]->b = avg_b;
 

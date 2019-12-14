@@ -39,6 +39,7 @@ typedef enum voxel_type {
 
 } __attribute__ ((packed)) voxel_type;
 
+#define NUM_MATERIALS 4
 typedef enum material { 
 
     UNKNOWN=-1, 
