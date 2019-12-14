@@ -345,10 +345,17 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
         }
             
         // this assumes each cube has the same maximum dimensions !!!
+        // spring loop:
         for (int i=0; i<(max_springs_per_indiv*pop_size); i++) {
 
             int indiv_idx = i / max_springs_per_indiv;
             int spring_idx = i % max_springs_per_indiv;
+
+            //printf("indiv_idx: %d\n", indiv_idx);
+            //printf("spring_idx: %d\n", spring_idx);
+
+            // make sure spring exists (sorry not tabbing everything else again):
+            if (NULL != pop_springs[indiv_idx][spring_idx]) {
                 
             // increment each spring by its breathing function
             pop_springs[indiv_idx][spring_idx]->l0 = 
@@ -387,15 +394,20 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
                 -= force_normalized*(y2 - y1)/stretched_len;
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 2]
                 -= force_normalized*(z2 - z1)/stretched_len;
+
+            }  // end if != NULL
         }
 
-
+        // mass loop:
         // apply force due to gravity, check if each mass is on or below 
         // the ground and apply appropriate force, then update position
         for (int i=0; i<(max_masses_per_indiv*pop_size); i++) {
 
             int indiv_idx = i / max_masses_per_indiv;
             int mass_idx = i % max_masses_per_indiv;
+
+            // make sure mass exists:
+            if (NULL != pop_masses[indiv_idx][mass_idx]) {
 
             // gravitational force:
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 2]
@@ -467,6 +479,8 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
                     (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)
                     / DT; 
             }
+
+            }  // end mass exists check
 
         }
  
