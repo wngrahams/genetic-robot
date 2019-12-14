@@ -9,13 +9,14 @@ int main(int argc, char** argv) {
 
     INIT_VOXEL_SPACE(indiv);
 
+    /*
     for (int i=0; i<total_voxels_at_depth(VOX_SPACE_MAX_DEPTH); i++) {
         printf("%d: ", i);
         printf("%d ", indiv->tree[i].type);
         printf("(%d, ", indiv->tree[i].pos[0]);
         printf("%d, ", indiv->tree[i].pos[1]);
         printf("%d)\n", indiv->tree[i].pos[2]);
-    }
+    }*/
     
     int max_masses = get_total_possible_masses(VOX_SPACE_MAX_DEPTH);
     Mass** possible_masses = malloc(sizeof(Mass*) * max_masses);
@@ -48,6 +49,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    
+    // clean up
     for (int i=0; i<max_masses; i++) {
         if (NULL != possible_masses[i])
             free(possible_masses[i]);
@@ -59,8 +62,6 @@ int main(int argc, char** argv) {
             free(possible_springs[i]);
     }
     free(possible_springs);
-
-
 
     delete_voxel_space(indiv);
 }

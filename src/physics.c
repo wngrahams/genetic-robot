@@ -184,7 +184,6 @@ void init_springs(Spring** springs,
     for (int i=0; i<max_num_masses; i++) {
         if (NULL != masses[i]) {
 
-            printf("making a spring for mass: %d\n", i);
             for (int x=0; x<2; x++) {
                 for (int y=-1; y<2; y++) {
                     for (int z=-1; z<2; z++) {
@@ -225,16 +224,6 @@ void init_springs(Spring** springs,
 
                                 springs[*num_springs]->m1 = i;
                                 springs[*num_springs]->m2 = neighbor_idx;
-
-                                printf("connecting spring from %d ", i);
-                                printf("(%.2f, %.2f, %.2f)", masses[i]->pos[0],
-                                       masses[i]->pos[1], masses[i]->pos[2]);
-                                printf(" to %d ", neighbor_idx);
-                                printf("(%.2f, %.2f, %.2f)\n", 
-                                       masses[neighbor_idx]->pos[0],
-                                       masses[neighbor_idx]->pos[1], 
-                                       masses[neighbor_idx]->pos[2]);
-
 
                                 float avg_k = 
                                     (material_to_k_map[masses[i]->material]
