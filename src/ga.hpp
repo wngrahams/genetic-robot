@@ -5,7 +5,7 @@
 
 // GA macros
 #define POP_SIZE 4
-#define NUM_OF_EVALS 1000
+#define NUM_OF_EVALS 1
 
 // robot macros
 #define NUM_OF_CENTERS 1
@@ -23,5 +23,9 @@ void ga_loop();
 void initialize_random_robot(Voxel_space *);
 void update_mats(Voxel_space *, const int, material_t);
 void update_exists(Voxel_space* , const int, int);
+void voxel_space_copy(Voxel_space *, Voxel_space *);
+void crossover(Voxel_space *);
+void mutation(Voxel_space *);
+void selection(Voxel_space *, Voxel_space *);
 
 #endif //_GA_H

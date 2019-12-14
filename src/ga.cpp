@@ -27,7 +27,8 @@ int main(int argc, char** argv) {
 void ga_loop() {
 
     // declare variables
-    int max_robot_size = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+
     // create initial parent population
     Voxel_space* parent[POP_SIZE];
     for (int i = 0; i < POP_SIZE; i++) {
@@ -37,7 +38,7 @@ void ga_loop() {
 
     for (int i=0; i<POP_SIZE; i++) {
         printf("individual %d:\n", i);
-        for (int j=0; j<max_robot_size; j++) {
+        for (int j=0; j<max_voxels; j++) {
             printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
                    j,
                    parent[i]->tree[j].position[0],
@@ -58,8 +59,8 @@ void ga_loop() {
     }
 
     for (int i=0; i<POP_SIZE; i++) {
-        printf("individual %d:\n", i);
-        for (int j=0; j<max_robot_size; j++) {
+        printf("parent %d:\n", i);
+        for (int j=0; j<max_voxels; j++) {
             printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
                    j,
                    parent[i]->tree[j].position[0],
@@ -75,11 +76,44 @@ void ga_loop() {
 
     // genetic algorithm loop
     for (int eval = 0; eval < NUM_OF_EVALS; eval++) {
-        // crossover
+        // initialize children population as copy of parent population
+        Voxel_space* child[POP_SIZE];
+        for (int i = 0; i < POP_SIZE; i++) {
+            INIT_VOXEL_SPACE(temp);
+            child[i] = temp;
+            child[i]->num_voxels = parent[i]->num_voxels;
+            child[i]->fitness = parent[i]->fitness;
+            for (int j = 0; j < max_voxels; j++) {
+                memcpy(&child[i]->tree[j], &parent[i]->tree[j], sizeof(Voxel));
+            }
+        }
 
-        // mutation
+        for (int i=0; i<POP_SIZE; i++) {
+            printf("child %d:\n", i);
+            for (int j=0; j<max_voxels; j++) {
+                printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
+                       j,
+                       child[i]->tree[j].position[0],
+                       child[i]->tree[j].position[1],
+                       child[i]->tree[j].position[2],
+                       child[i]->tree[j].exists,
+                       child[i]->tree[j].material,
+                       child[i]->tree[j].type);
 
-        // selection
+            }
+            printf("\n");
+        }
+
+//        // crossover
+
+//        // mutation
+
+//        // selection
+
+//        // clean up child generation
+        for (int i=0; i<POP_SIZE; i++) {
+            delete_voxel_space(child[i]);
+        }
 
     }
 
@@ -88,7 +122,7 @@ void ga_loop() {
 //    }
 
 
-    // clean up:
+    // clean up
     for (int i=0; i<POP_SIZE; i++) {
         delete_voxel_space(parent[i]);
     }
@@ -100,22 +134,19 @@ void ga_loop() {
 void initialize_random_robot(Voxel_space *individual) {
 
     // number of nodes in tree in Voxel_space
-    int max_robot_size = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
-    std::cout << "max vox: " << max_robot_size << "\n";
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    std::cout << "max vox: " << max_voxels << "\n";
 
-    for (int i = 0; i < max_robot_size; i++) {
+    for (int i = 0; i < max_voxels; i++) {
         individual->tree[i].exists = 1;
-        individual->tree[i].material = UNKNOWN;
+        individual->tree[i].material = BONE;
     }
 
     for (int i = 0; i < NUM_OF_CENTERS; i++) {
-        // pick random index and random material
-        int center = rand() % max_robot_size;
+        // pick random index and a material
+        int center = rand() % max_voxels;
         printf("center chosen: %d\n", center);
-
-        material_t mat = 
-            static_cast<material_t>(rand() % (NUM_OF_MATERIALS - 1) + 1);
-
+        material_t mat = static_cast<material_t>(i);
         printf("material chosen: %d\n", mat);
 
         // update tree accordingly
@@ -123,8 +154,8 @@ void initialize_random_robot(Voxel_space *individual) {
     }
 
     for (int i = 0; i < NUM_OF_HOLES; i++) {
-        // pick random index (not original cube) and set all children to null
-        int center = rand() % (max_robot_size - 1) + 1;
+        // pick random index (not root/central cube) and set all children to null
+        int center = rand() % (max_voxels - 1) + 1;
         update_exists(individual, center, 0);
     }
 }
@@ -133,17 +164,10 @@ void initialize_random_robot(Voxel_space *individual) {
  * update voxel and all of its children with specified material
  */
 void update_mats(Voxel_space* vs, const int idx, material_t mat) {
-
-    //std::cout << idx << " type: " << vs->tree[idx].type << "\n";
-    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) { 
-        //std::cout << "HEY\n"; 
-        return; 
+    // return if past bounds
+    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) {
+        return;
     }
-
-    /*
-    for (int i = 0; i < total_voxels_at_depth(VOX_SPACE_MAX_DEPTH); i++) {
-        //std::cout << "typE: " << vs->tree[i].type << "\n";
-    }*/
 
     // for convenience
     voxel_type current_type = vs->tree[idx].type;
@@ -178,10 +202,9 @@ void update_mats(Voxel_space* vs, const int idx, material_t mat) {
  * update voxel and all of its children with existence or non-existence
  */
 void update_exists(Voxel_space* vs, const int idx, int exists) {
-
-    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) { 
-        std::cout << "EXISTS DONE\n"; 
-        return; 
+    // return if past bounds
+    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) {
+        return;
     }
 
     // for convenience
@@ -212,3 +235,30 @@ void update_exists(Voxel_space* vs, const int idx, int exists) {
     }
 }
 
+/*
+ * copy one voxel_space array population to another
+ */
+void voxel_space_copy(Voxel_space *A, Voxel_space *B) {
+    // implemented in ga_loop currently
+}
+
+/*
+ * crossover
+ */
+void crossover(Voxel_space *vs) {
+
+}
+
+/*
+ * mutation
+ */
+void mutation(Voxel_space *vs) {
+
+}
+
+/*
+ * tournament selection
+ */
+void selection(Voxel_space *parent, Voxel_space *child) {
+
+}
