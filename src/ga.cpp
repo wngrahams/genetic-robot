@@ -75,7 +75,7 @@ void ga_loop() {
     }
 
     // genetic algorithm loop
-    for (int eval = 0; eval < NUM_OF_EVALS; eval++) {
+    for (int eval = 0; eval < NUM_OF_EVALS; eval+=POP_SIZE) {
         // initialize children population as copy of parent population
         Voxel_space* child[POP_SIZE];
         for (int i = 0; i < POP_SIZE; i++) {
@@ -141,7 +141,7 @@ void ga_loop() {
             }
         }
         // selection
-        selection(parent, child, all);
+//        selection(parent, child, all);
 
         // clean up child, all generation
         for (int i=0; i<POP_SIZE; i++) {
