@@ -319,8 +319,20 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
     float* force_vectors = malloc(sizeof(float) * pop_size*max_masses_per_indiv*3);
     CHECK_MALLOC_ERR(force_vectors);
 
-    // TODO: free force vectors
-    
+    float* centers_of_mass_i = malloc(sizeof(float)*pop_size*3);
+    CHECK_MALLOC_ERR(centers_of_mass_i);
+
+    float* centers_of_mass_f = malloc(sizeof(float)*pop_size*3);
+    CHECK_MALLOC_ERR(centers_of_mass_f);
+
+
+    // get initial centers of mass:
+    for (int i=0; i<pop_size; i++) {
+        calculate_center_of_mass(pop_masses[i], 
+                                 max_masses_per_indiv, 
+                                 &(centers_of_mass_i[3*i]));
+    }
+
     // this sucks but so do I
     int masses_per_indiv = max_masses_per_indiv;
    
@@ -386,56 +398,99 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
             int mass_idx = i % max_masses_per_indiv;
 
             // gravitational force:
-            force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 2]
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 2]
                 -= pop_masses[indiv_idx][mass_idx]->m * G;
 
             // ground forces (normal and friction):
             if (pop_masses[indiv_idx][mass_idx]->pos[2] <= 0) {
 
                 // friction
-                if (force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx + 2]<0) {
+                if (force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+2]<0) {
 
                     float force_horiz = 
-    sqrtf(powf(force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 0], 2.) 
-         + powf(force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 1], 2.));
+    sqrtf(powf(force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 0], 2.) 
+    + powf(force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 1], 2.));
 
                     float cos_theta = 
-                    force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 0]
+                    force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 0]
                     / force_horiz;
 
                     float sin_theta = 
-                    force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 1]
+                    force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 1]
                     / force_horiz;
 
                     float f_y = 
-                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx + 2];
+                    force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx + 2];
 
                     if (force_horiz < (-1) * f_y * U_S) {
-                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+0]=0;
-                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+1]=0;
+                    force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+0]=0;
+                    force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+1]=0;
                     }
                     else {
                         float f_kinetic_friction = U_K * f_y;
                         force_horiz += f_kinetic_friction;
 
-                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+0] =
-                            force_horiz * cos_theta;
-                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+1] = 
-                            force_horiz * sin_theta;
+                        force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+0] 
+                            = force_horiz * cos_theta;
+                        force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+1] 
+                            = force_horiz * sin_theta;
                     }
 
                 }  // end friction
 
                 // normal force:
-                force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+2]
+                force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx + 2]
                     = K_GROUND * fabsf(pop_masses[indiv_idx][mass_idx]->pos[2]);
+            
+            }  // end ground forces
+
+            // update positions:
+            for (int j=0; j<3; j++) {
+                // acceleration:
+                pop_masses[indiv_idx][mass_idx]->acc[j] = 
+                    force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx + j]
+                    / pop_masses[indiv_idx][mass_idx]->m;
+
+                // velocity:
+                pop_masses[indiv_idx][mass_idx]->vel[j] +=
+                    pop_masses[indiv_idx][mass_idx]->acc[j] * DT * V_DAMP_CONST;
+
+                // position:
+                pop_masses[indiv_idx][mass_idx]->pos[j] +=
+                    pop_masses[indiv_idx][mass_idx]->vel[j] * DT; 
             }
+
+            // apply height penalty to fitness:
+            float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)/L0_SIDE)+L0_SIDE;
+            if (pop_masses[indiv_idx][mass_idx]->pos[2] > threshold) {
+                population[indiv_idx]->fitness -= 
+                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)
+                    / DT; 
+            }
+
         }
  
         t += DT;
     }  
 
+    // get final centers of mass and calculate fitness:
+    for (int i=0; i<pop_size; i++) {
+        calculate_center_of_mass(pop_masses[i], 
+                                 max_masses_per_indiv, 
+                                 &(centers_of_mass_f[3*i]));
+
+        population[i]->simulated_dist = centers_of_mass_f[3*i+0]
+                                        - centers_of_mass_i[3*i+0];
+        population[i]->fitness += population[i]->simulated_dist;
+    }
+
+
     // clean up:
+
+    free(force_vectors);
+    free(centers_of_mass_i);
+    free(centers_of_mass_f);
+
     for (int i=0; i<pop_size; i++) {
         for (int j=0; j<max_masses_per_indiv; j++) {
             if (NULL != pop_masses[i][j]) {
@@ -456,5 +511,28 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
 
     free(pop_mass_counts);
     free(pop_spring_counts);
+}
+
+void calculate_center_of_mass(Mass** indiv_masses, 
+                              const int max_num_masses, 
+                              float* com) {
+
+    float total_mass = 0.0f;
+    float pos_x = 0.0f;
+    float pos_y = 0.0f;
+    float pos_z = 0.0f;
+    
+    for (int i=0; i<max_num_masses; i++) {
+        if (NULL != indiv_masses[i]) {
+            total_mass += indiv_masses[i]->m;
+            pos_x += indiv_masses[i]->m * indiv_masses[i]->pos[0];
+            pos_y += indiv_masses[i]->m * indiv_masses[i]->pos[1];
+            pos_y += indiv_masses[i]->m * indiv_masses[i]->pos[2];
+        }
+    }
+
+    *(com+0) = pos_x / total_mass;
+    *(com+1) = pos_y / total_mass;
+    *(com+2) = pos_z / total_mass;
 }
 

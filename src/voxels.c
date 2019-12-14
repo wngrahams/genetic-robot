@@ -67,6 +67,8 @@ void init_voxel_space(Voxel_space* vs) {
     }
 
     vs->num_voxels = 1;
+    vs->fitness = 0.0f;
+    vs->simulated_dist = 0.0f;
 }
 
 /*

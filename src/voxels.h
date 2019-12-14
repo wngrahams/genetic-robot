@@ -41,11 +41,11 @@ typedef enum voxel_type {
 
 typedef enum material { 
 
-    UNKNOWN, 
-    HARD, 
-    SOFT, 
-    EXPAND, 
-    CONTRACT 
+    UNKNOWN=-1, 
+    HARD=0, 
+    SOFT=1, 
+    EXPAND=2, 
+    CONTRACT=3 
 
 } __attribute__ ((packed)) material_t;
 
@@ -69,6 +69,7 @@ typedef struct Voxel_space {
     Voxel* tree;
     int num_voxels;
     float fitness;
+    float simulated_dist;
 
 } Voxel_space;
 

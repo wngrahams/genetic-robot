@@ -39,7 +39,7 @@ extern "C" {
 #define K_SOFT   500.0f
 #define K_MUSCLE 2000.0f
 
-// These values must be multiplied by l0 before assigning to the b parameter!!!
+// These values must be multiplied by L0 before assigning to the b parameter!!!
 #define B_STATIC 0.0f
 #define B_MUSCLE 0.5f
 
@@ -90,7 +90,7 @@ void dfs_init_masses(Voxel_space*,
 void init_springs(Spring**, Mass**, int*, const int, const int);
 
 static inline float get_b_from_mat(const int mat, const int l0) {
-    return l0*mat;
+    return l0*material_to_b_map[mat];
 }
 
 void simulate_population_cpu(Voxel_space**, const int); 
@@ -101,6 +101,8 @@ static float inline dist3d(const float x2, const float x1,
 
     return sqrtf(powf(x2-x1, 2.) + powf(y2-y1, 2.) + powf(z2-z1, 2.));
 }
+
+void calculate_center_of_mass(Mass**, const int, float*);
 
 #ifdef __cplusplus
 }
