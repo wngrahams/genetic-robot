@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "ga.hpp"
 #include "voxels.h"
 #include "time.h"
@@ -19,13 +20,20 @@ int main(int argc, char** argv) {
 //    }
 //    delete_voxel_space(indiv);
 
-    ga_loop();
+    ga_loop(0);
 }
 
 /*
  * genetic algorithm loop
  */
-void ga_loop() {
+void ga_loop(int thread_num) {
+
+    // begin timer
+    clock_t begin = clock();
+
+    // initialize files
+    std::ofstream learning_file;
+    learning_file.open(std::to_string(thread_num) + LEARNING_TXT);
 
     // declare variables
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
@@ -119,6 +127,9 @@ void ga_loop() {
 
         // calculate fitness
         // fitness this dicc in ur mouth
+        for (int i = 0; i < POP_SIZE; i++) {
+            //simulate_loop();
+        }
 
         // initialize all population as copy of parent + child population
         Voxel_space* all[POP_SIZE * 2];
@@ -150,12 +161,35 @@ void ga_loop() {
         for (int i=0; i<POP_SIZE*2; i++) {
             delete_voxel_space(all[i]);
         }
+
+        // find most fit individual
+        int max_fit_index = 0;
+        for (int i = 0; i < POP_SIZE; i++) {
+            if (parent[i]->fitness > parent[max_fit_index]->fitness) {
+                max_fit_index = i;
+            }
+        }
+
+        // write learning curve to file
+        for (int i = 0; i < POP_SIZE; i++) {
+            learning_file << parent[max_fit_index]->fitness << ",";
+        }
+
+        // print fitnesses of population
+        if (eval % POP_SIZE == 0) {
+            for (int i = 0; i < POP_SIZE; i++) {
+                std::cout << eval << ": " << parent[i]->fitness << "\n";
+            }
+        }
     }
 
     // clean up parent generation
     for (int i=0; i<POP_SIZE; i++) {
         delete_voxel_space(parent[i]);
     }
+
+    // close file
+    learning_file.close();
 }
 
 /*

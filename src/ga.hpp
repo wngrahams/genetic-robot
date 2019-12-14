@@ -21,7 +21,7 @@
 // file macros
 #define LEARNING_TXT "learningcurve_ga.txt" // for learning curve
 
-void ga_loop();
+void ga_loop(int);
 void initialize_random_robot(Voxel_space *);
 void update_mats(Voxel_space *, const int, material_t);
 void update_exists(Voxel_space* , const int, int);
