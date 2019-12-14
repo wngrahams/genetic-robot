@@ -18,8 +18,19 @@ extern "C" {
 
 #define HEIGHT_OFFSET VOX_SPACE_MAX_DEPTH
 
+// world variables
+#define G                 9.80665f
+#define OMEGA             (4.*F_PI)
+#define K_GROUND          100000.0f
+#define DT                0.0001f
+#define V_DAMP_CONST      0.999f //0.999999
+#define NUM_OF_ITERATIONS 15000
+// 15000 = 3 cycles (for omega = 4pi and DT = 0.0001)
+#define U_S 1.0f
+#define U_K 0.8f
+
 // cube variables
-#define MASS_M 0.1f
+#define MASS_M    0.1f
 #define L0_SIDE   0.1f
 #define L0_FACE   0.141421f
 #define L0_MIDDLE 0.173205f
@@ -80,6 +91,15 @@ void init_springs(Spring**, Mass**, int*, const int, const int);
 
 static inline float get_b_from_mat(const int mat, const int l0) {
     return l0*mat;
+}
+
+void simulate_population_cpu(Voxel_space**, const int); 
+
+static float inline dist3d(const float x2, const float x1,
+                           const float y2, const float y1,
+                           const float z2, const float z1) {
+
+    return sqrtf(powf(x2-x1, 2.) + powf(y2-y1, 2.) + powf(z2-z1, 2.));
 }
 
 #ifdef __cplusplus

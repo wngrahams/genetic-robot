@@ -1,4 +1,4 @@
-CC  = gcc
+CC  = gcc-9
 CXX = g++
 
 INCLUDES = 
@@ -6,7 +6,7 @@ INCLUDES =
 CFLAGS   = -O0 -g -Wall -Werror $(INCLUDES)
 CXXFLAGS = -O0 -g -Wall -Werror $(INCLUDES)
 
-LDFLAGS = -g 
+LDFLAGS = -g -fopenmp
 LDLIBS  = -lm 
 
 executables = driver

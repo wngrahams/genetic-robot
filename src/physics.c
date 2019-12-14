@@ -5,6 +5,10 @@
 
 #include <assert.h>
 
+#if defined(__GNUC__) && (__GNUC___ >= 7)
+#include <omp.h>
+#endif
+
 #include "physics.h"
 
 void init_masses_and_springs_from_voxel_space(Mass** masses, 
@@ -268,4 +272,189 @@ loop_end: ;
         }  // end if not null
     }  // end for each mass
 }  // end function
+
+
+/*
+ * runs the physics simulation for each member of the population
+ */
+void simulate_population_cpu(Voxel_space** population, const int pop_size) {
+
+    // initialize masses and springs for each member of the population
+    int max_masses_per_indiv = get_total_possible_masses(VOX_SPACE_MAX_DEPTH);
+    int max_springs_per_indiv = get_total_possible_springs(VOX_SPACE_MAX_DEPTH);
+
+    Mass*** pop_masses = malloc(sizeof(Mass**) * pop_size);
+    CHECK_MALLOC_ERR(pop_masses);
+
+    Spring*** pop_springs = malloc(sizeof(Spring**) * pop_size);
+    CHECK_MALLOC_ERR(pop_springs);
+
+    int* pop_mass_counts = malloc(sizeof(int) * pop_size);
+    CHECK_MALLOC_ERR(pop_mass_counts);
+
+    int* pop_spring_counts = malloc(sizeof(int) * pop_size);
+    CHECK_MALLOC_ERR(pop_spring_counts);
+
+    for (int i=0; i<pop_size; i++) {
+        Mass** indiv_masses = malloc(sizeof(Mass*) * max_masses_per_indiv);
+        CHECK_MALLOC_ERR(indiv_masses);
+        pop_masses[i] = indiv_masses;
+
+        Spring** indiv_springs = malloc(sizeof(Spring*) * max_springs_per_indiv);
+        CHECK_MALLOC_ERR(indiv_springs);
+        pop_springs[i] = indiv_springs;
+
+        pop_mass_counts[i] = 0;
+        pop_spring_counts[i] = 0;
+        init_masses_and_springs_from_voxel_space(pop_masses[i],
+                                                 max_masses_per_indiv,
+                                                 pop_springs[i],
+                                                 max_springs_per_indiv,
+                                                 &(pop_mass_counts[i]),
+                                                 &(pop_spring_counts[i]),
+                                                 population[i]);
+    }
+
+    
+    float* force_vectors = malloc(sizeof(float) * pop_size*max_masses_per_indiv*3);
+    CHECK_MALLOC_ERR(force_vectors);
+
+    // TODO: free force vectors
+    
+    // this sucks but so do I
+    int masses_per_indiv = max_masses_per_indiv;
+   
+    float t = 0.0f;
+    for (int sim_i=0; sim_i<NUM_OF_ITERATIONS; sim_i++) {
+
+        // reset forces
+        for (int f=0; f<(pop_size*max_masses_per_indiv*3); f++) {
+            force_vectors[f] = 0.0f;
+        }
+            
+        // this assumes each cube has the same maximum dimensions !!!
+        for (int i=0; i<(max_springs_per_indiv*pop_size); i++) {
+
+            int indiv_idx = i / max_springs_per_indiv;
+            int spring_idx = i % max_springs_per_indiv;
+                
+            // increment each spring by its breathing function
+            pop_springs[indiv_idx][spring_idx]->l0 = 
+                pop_springs[indiv_idx][spring_idx]->a
+                + pop_springs[indiv_idx][spring_idx]->b 
+                * sinf(OMEGA*t + pop_springs[indiv_idx][spring_idx]->c);
+                
+                        
+            // apply spring forces to masses
+            int m1 = pop_springs[indiv_idx][spring_idx]->m1;
+            int m2 = pop_springs[indiv_idx][spring_idx]->m2;
+            int x1 = pop_masses[indiv_idx][m1]->pos[0];
+            int y1 = pop_masses[indiv_idx][m1]->pos[1];
+            int z1 = pop_masses[indiv_idx][m1]->pos[2];
+            int x2 = pop_masses[indiv_idx][m2]->pos[0];
+            int y2 = pop_masses[indiv_idx][m2]->pos[1];
+            int z2 = pop_masses[indiv_idx][m2]->pos[2];
+
+            float stretched_len = dist3d(x2, x1, y2, y1, z2, z1);
+
+            float force_normalized = 
+                pop_springs[indiv_idx][spring_idx]->k
+                * (stretched_len - pop_springs[indiv_idx][spring_idx]->l0);
+            
+            // update force vectors:
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m1 + 0]
+                += force_normalized*(x2 - x1)/stretched_len;
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m1 + 1]
+                += force_normalized*(y2 - y1)/stretched_len;
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m1 + 2]
+                += force_normalized*(z2 - z1)/stretched_len;
+
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 0]
+                -= force_normalized*(x2 - x1)/stretched_len;
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 1]
+                -= force_normalized*(y2 - y1)/stretched_len;
+            force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 2]
+                -= force_normalized*(z2 - z1)/stretched_len;
+        }
+
+
+        // apply force due to gravity, check if each mass is on or below 
+        // the ground and apply appropriate force, then update position
+        for (int i=0; i<(max_masses_per_indiv*pop_size); i++) {
+
+            int indiv_idx = i / max_masses_per_indiv;
+            int mass_idx = i % max_masses_per_indiv;
+
+            // gravitational force:
+            force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 2]
+                -= pop_masses[indiv_idx][mass_idx]->m * G;
+
+            // ground forces (normal and friction):
+            if (pop_masses[indiv_idx][mass_idx]->pos[2] <= 0) {
+
+                // friction
+                if (force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx + 2]<0) {
+
+                    float force_horiz = 
+    sqrtf(powf(force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 0], 2.) 
+         + powf(force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 1], 2.));
+
+                    float cos_theta = 
+                    force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 0]
+                    / force_horiz;
+
+                    float sin_theta = 
+                    force_vectors[(masses_per_indiv)*indiv_idx + 3*mass_idx + 1]
+                    / force_horiz;
+
+                    float f_y = 
+                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx + 2];
+
+                    if (force_horiz < (-1) * f_y * U_S) {
+                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+0]=0;
+                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+1]=0;
+                    }
+                    else {
+                        float f_kinetic_friction = U_K * f_y;
+                        force_horiz += f_kinetic_friction;
+
+                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+0] =
+                            force_horiz * cos_theta;
+                        force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+1] = 
+                            force_horiz * sin_theta;
+                    }
+
+                }  // end friction
+
+                // normal force:
+                force_vectors[(masses_per_indiv)*indiv_idx+3*mass_idx+2]
+                    = K_GROUND * fabsf(pop_masses[indiv_idx][mass_idx]->pos[2]);
+            }
+        }
+ 
+        t += DT;
+    }  
+
+    // clean up:
+    for (int i=0; i<pop_size; i++) {
+        for (int j=0; j<max_masses_per_indiv; j++) {
+            if (NULL != pop_masses[i][j]) {
+                free(pop_masses[i][j]);
+            }
+        }
+        free(pop_masses[i]);
+
+        for (int j=0; j<max_springs_per_indiv; j++) {
+            if (NULL != pop_springs[i][j]) {
+                free(pop_springs[i][j]);
+            }
+        }
+        free(pop_springs[i]);
+    }
+    free(pop_masses);
+    free(pop_springs);
+
+    free(pop_mass_counts);
+    free(pop_spring_counts);
+}
 

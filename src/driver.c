@@ -5,9 +5,18 @@
 #include "physics.h"
 #include "voxels.h"
 
+#define TEST_POP_SIZE 500
+
 int main(int argc, char** argv) {
 
-    INIT_VOXEL_SPACE(indiv);
+
+    Voxel_space* population[TEST_POP_SIZE];
+    for (int i=0; i<TEST_POP_SIZE; i++) {
+        INIT_VOXEL_SPACE(indiv);
+        population[i] = indiv;
+    }
+
+    simulate_population_cpu(population, TEST_POP_SIZE);
 
     /*
     for (int i=0; i<total_voxels_at_depth(VOX_SPACE_MAX_DEPTH); i++) {
@@ -17,7 +26,8 @@ int main(int argc, char** argv) {
         printf("%d, ", indiv->tree[i].pos[1]);
         printf("%d)\n", indiv->tree[i].pos[2]);
     }*/
-    
+   
+    /*
     int max_masses = get_total_possible_masses(VOX_SPACE_MAX_DEPTH);
     Mass** possible_masses = malloc(sizeof(Mass*) * max_masses);
     CHECK_MALLOC_ERR(possible_masses);
@@ -62,7 +72,10 @@ int main(int argc, char** argv) {
             free(possible_springs[i]);
     }
     free(possible_springs);
+    */
 
-    delete_voxel_space(indiv);
+    for (int i=0; i<TEST_POP_SIZE; i++) {
+        delete_voxel_space(population[i]);
+    }
 }
 

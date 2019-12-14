@@ -17,7 +17,7 @@
 #define DEPTH_9X9   4
 #define DEPTH_11X11 5
 
-#define VOX_SPACE_MAX_DEPTH DEPTH_11X11  // Must be at least (3x3)
+#define VOX_SPACE_MAX_DEPTH DEPTH_5X5  // Must be at least (3x3)
 
 #define NUM_R_3X3 1
 #define NUM_M_3X3 6
