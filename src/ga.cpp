@@ -2,6 +2,7 @@
 #include "ga.hpp"
 #include "voxels.h"
 #include "time.h"
+#include <random>
 
 int main(int argc, char** argv) {
 
@@ -47,7 +48,6 @@ void ga_loop() {
                    parent[i]->tree[j].exists,
                    parent[i]->tree[j].material,
                    parent[i]->tree[j].type);
-
         }
         printf("\n");
     }
@@ -104,25 +104,55 @@ void ga_loop() {
             printf("\n");
         }
 
-//        // crossover
+        // generate random order for crossover
+        int order[POP_SIZE];
+        randomize_array(order);
+        // crossover
+        for (int i = 0; i < POP_SIZE; i+=2) {
+            crossover(child[order[i]], child[order[i+1]]);
+        }
 
-//        // mutation
+        // mutation
+        for (int i = 0; i < POP_SIZE; i++) {
+            mutation(child[i]);
+        }
 
-//        // selection
+        // calculate fitness
+        // fitness this dicc in ur mouth
 
-//        // clean up child generation
+        // initialize all population as copy of parent + child population
+        Voxel_space* all[POP_SIZE * 2];
+        for (int i = 0; i < POP_SIZE; i++) {
+            INIT_VOXEL_SPACE(temp);
+            all[i] = temp;
+            all[i]->num_voxels = parent[i]->num_voxels;
+            all[i]->fitness = parent[i]->fitness;
+            for (int j = 0; j < max_voxels; j++) {
+                memcpy(&all[i]->tree[j], &parent[i]->tree[j], sizeof(Voxel));
+            }
+        }
+        for (int i = POP_SIZE; i < POP_SIZE*2; i++) {
+            INIT_VOXEL_SPACE(temp);
+            all[i] = temp;
+            all[i]->num_voxels = child[i]->num_voxels;
+            all[i]->fitness = child[i]->fitness;
+            for (int j = 0; j < max_voxels; j++) {
+                memcpy(&all[i]->tree[j], &child[i]->tree[j], sizeof(Voxel));
+            }
+        }
+        // selection
+        selection(parent, child, all);
+
+        // clean up child, all generation
         for (int i=0; i<POP_SIZE; i++) {
             delete_voxel_space(child[i]);
         }
-
+        for (int i=0; i<POP_SIZE*2; i++) {
+            delete_voxel_space(all[i]);
+        }
     }
 
-//    for (int i = 0; i < POP_SIZE; i++) {
-//        delete_voxel_space(&parent[i]);
-//    }
-
-
-    // clean up
+    // clean up parent generation
     for (int i=0; i<POP_SIZE; i++) {
         delete_voxel_space(parent[i]);
     }
@@ -245,20 +275,124 @@ void voxel_space_copy(Voxel_space *A, Voxel_space *B) {
 /*
  * crossover
  */
-void crossover(Voxel_space *vs) {
+void crossover(Voxel_space *A, Voxel_space *B) {
+    // get random spot for crossover (not root / center)
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    int p = rand() % (max_voxels - 1) + 1;
+    while (!A->tree[p].exists || !B->tree[p].exists) {
+        p = rand() % (max_voxels - 1) + 1;
+    }
 
+    // switch morphology at point and all its children
+    crossover_exists(A, B, p);
+}
+
+/*
+ * recursively descend through two trees and switch exists at each idx
+ */
+void crossover_exists(Voxel_space *A, Voxel_space *B, int idx) {
+    // return if past bounds
+    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) {
+        return;
+    }
+
+    // for convenience
+    voxel_type current_type = A->tree[idx].type;
+    // switch morphology
+    int temp = A->tree[idx].exists;
+    A->tree[idx].exists = B->tree[idx].exists;
+    B->tree[idx].exists = temp;
+
+    // recursive descent through children
+    if (ROOT == current_type) {
+        for (int i=1; i<27; i++) {
+            crossover_exists(A, B, i);
+        }
+    } else if (MIDDLE == current_type) {
+        crossover_exists(A, B, get_child_index_of_m(idx));
+    } else if (EDGE == current_type) {
+        for (int i=0; i<2; i++) {
+            crossover_exists(A, B, get_child_index_of_e(idx, MIDDLE, i));
+        }
+        crossover_exists(A, B, get_child_index_of_e(idx, EDGE, 0));
+    } else if (CORNER == current_type) {
+        for (int i=0; i<3; i++) {
+            crossover_exists(A, B, get_child_index_of_c(idx, MIDDLE, i));
+        }
+        for (int i=0; i<3; i++) {
+            crossover_exists(A, B, get_child_index_of_c(idx, EDGE, i));
+        }
+        crossover_exists(A, B, get_child_index_of_c(idx, CORNER, 0));
+    }
 }
 
 /*
  * mutation
  */
-void mutation(Voxel_space *vs) {
-
+void mutation(Voxel_space *A) {
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    for (int i = 0; i < NUM_OF_MUT; i++) {
+        double mut = (rand()/(double)RAND_MAX);
+        if (CHANCE_OF_MUT < mut) {
+            // pick random spot for mutation
+            int p = rand() % (max_voxels - 1) + 1;
+            while (!A->tree[p].exists) {
+                p = rand() % (max_voxels - 1) + 1;
+            }
+            // pick random exists or not and update robot
+            int exists = rand() % 1;
+            update_exists(A, p, exists);
+        }
+    }
 }
 
 /*
  * tournament selection
  */
-void selection(Voxel_space *parent, Voxel_space *child) {
+void selection(Voxel_space **parent, Voxel_space **child, Voxel_space **all) {
+    // random variable generation
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<> compare(0, POP_SIZE * 2 - 1);
 
+    // take elite child;
+    int best_parent_index = 0;
+    int best_child_index = 0;
+    for (int i = 0; i < POP_SIZE; i++) {
+        if (parent[i]->fitness > parent[best_parent_index]->fitness) {
+            best_parent_index = i;
+        }
+        if (child[i]->fitness > child[best_child_index]->fitness) {
+            best_child_index = i;
+        }
+    }
+    parent[0] = parent[best_parent_index];
+    parent[1] = child[best_child_index];
+
+    for (int i = 2; i < POP_SIZE; i++) {
+        int m = compare(mt);
+        int n = compare(mt);
+        while (m == n) {
+            n = compare(mt);
+        }
+
+        if (all[m]->fitness > all[n]->fitness) {
+            parent[i] = all[m];
+        } else {
+            parent[i] = all[n];
+        }
+    }
+}
+
+void randomize_array(int *order) {
+    // create vector with order of parents to be crossed over
+    for (int i = 0; i < POP_SIZE; i++) {
+        order[i] = i;
+    }
+    for (int i = POP_SIZE - 1; i > 0; i--) {
+        int j = (int)(rand() % (i+1));
+        int temp = order[i];
+        order[i] = order[j];
+        order[j] = temp;
+    }
 }
