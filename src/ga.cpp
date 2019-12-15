@@ -35,6 +35,10 @@ void ga_loop(int thread_num) {
     // initialize files
     std::ofstream learning_file;
     learning_file.open(std::to_string(thread_num) + LEARNING_TXT);
+    std::ofstream dot_file;
+    dot_file.open(std::to_string(thread_num) + DOT_TXT);
+    std::ofstream diversity_file;
+    diversity_file.open(std::to_string(thread_num) + DIVERSITY_TXT);
 
     // declare variables
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
@@ -46,20 +50,20 @@ void ga_loop(int thread_num) {
         parent[i] = temp;
     }
 
-//    for (int i=0; i<POP_SIZE; i++) {
-//        printf("individual %d:\n", i);
-//        for (int j=0; j<max_voxels; j++) {
-//            printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
-//                   j,
-//                   parent[i]->tree[j].pos[0],
-//                   parent[i]->tree[j].pos[1],
-//                   parent[i]->tree[j].pos[2],
-//                   parent[i]->tree[j].exists,
-//                   parent[i]->tree[j].material,
-//                   parent[i]->tree[j].type);
-//        }
-//        printf("\n");
-//    }
+    for (int i=0; i<POP_SIZE; i++) {
+        printf("individual %d:\n", i);
+        for (int j=0; j<max_voxels; j++) {
+            printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
+                   j,
+                   parent[i]->tree[j].pos[0],
+                   parent[i]->tree[j].pos[1],
+                   parent[i]->tree[j].pos[2],
+                   parent[i]->tree[j].exists,
+                   parent[i]->tree[j].material,
+                   parent[i]->tree[j].type);
+        }
+        printf("\n");
+    }
     
     // randomize initial population
     for (int i = 0; i < POP_SIZE; i++) {
@@ -67,21 +71,21 @@ void ga_loop(int thread_num) {
         initialize_random_robot(parent[i]);
     }
 
-//    for (int i=0; i<POP_SIZE; i++) {
-//        printf("parent %d:\n", i);
-//        for (int j=0; j<max_voxels; j++) {
-//            printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
-//                   j,
-//                   parent[i]->tree[j].pos[0],
-//                   parent[i]->tree[j].pos[1],
-//                   parent[i]->tree[j].pos[2],
-//                   parent[i]->tree[j].exists,
-//                   parent[i]->tree[j].material,
-//                   parent[i]->tree[j].type);
-//
-//        }
-//        printf("\n");
-//    }
+    for (int i=0; i<POP_SIZE; i++) {
+        printf("parent %d:\n", i);
+        for (int j=0; j<max_voxels; j++) {
+            printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
+                   j,
+                   parent[i]->tree[j].pos[0],
+                   parent[i]->tree[j].pos[1],
+                   parent[i]->tree[j].pos[2],
+                   parent[i]->tree[j].exists,
+                   parent[i]->tree[j].material,
+                   parent[i]->tree[j].type);
+
+        }
+        printf("\n");
+    }
 
     // genetic algorithm loop
     for (int eval = 0; eval < NUM_OF_EVALS; eval+=POP_SIZE) {
@@ -116,6 +120,11 @@ void ga_loop(int thread_num) {
         for (int i = 0; i < POP_SIZE; i++) {
             simulate_population_cpu(parent, POP_SIZE, DEFAULT_START_HEIGHT);
             simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
+        }
+
+        // print fitnesses of population
+        for (int i = 0; i < POP_SIZE; i++) {
+            std::cout << 0 << ": " << parent[i]->fitness << "\n";
         }
 
         // initialize all population as copy of parent + child population
@@ -163,6 +172,12 @@ void ga_loop(int thread_num) {
         for (int i = 0; i < POP_SIZE; i++) {
             learning_file << parent[max_fit_index]->fitness << ",";
         }
+        // write to dot plot file
+        for (int i = 0; i < POP_SIZE; i++) {
+            dot_file << eval << "," << parent[i]->fitness << "\n";
+        }
+        // calculate and write to diversity file
+        diversity_file << calculate_diversity(parent) << ",";
 
         // print fitnesses of population
         if (eval % POP_SIZE == 0) {
@@ -185,10 +200,13 @@ void ga_loop(int thread_num) {
  * initialize a robot with random material centers and morphology
  */
 void initialize_random_robot(Voxel_space *individual) {
-
     // number of nodes in tree in Voxel_space
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
-//    std::cout << "max vox: " << max_voxels << "\n";
+    // random variable generation
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<> mat_cent(0, max_voxels - 1);
+    std::uniform_int_distribution<> exi_cent(1, max_voxels - 1);
 
     for (int i = 0; i < max_voxels; i++) {
         individual->tree[i].exists = 1;
@@ -197,7 +215,7 @@ void initialize_random_robot(Voxel_space *individual) {
 
     for (int i = 0; i < NUM_OF_CENTERS; i++) {
         // pick random index and a material
-        int center = rand() % max_voxels;
+        int center = mat_cent(mt);
 //        printf("center chosen: %d\n", center);
         material_t mat = static_cast<material_t>(i);
 //        printf("material chosen: %d\n", mat);
@@ -208,7 +226,7 @@ void initialize_random_robot(Voxel_space *individual) {
 
     for (int i = 0; i < NUM_OF_HOLES; i++) {
         // pick random index (not root/central cube) and set all children to null
-        int center = rand() % (max_voxels - 1) + 1;
+        int center = exi_cent(mt);
         update_exists(individual, center, 0);
     }
 }
@@ -412,6 +430,9 @@ void selection(Voxel_space **parent, Voxel_space **child, Voxel_space **all) {
     }
 }
 
+/*
+ * create random array
+ */
 void randomize_array(int *order) {
     // create vector with order of parents to be crossed over
     for (int i = 0; i < POP_SIZE; i++) {
@@ -425,6 +446,9 @@ void randomize_array(int *order) {
     }
 }
 
+/*
+ * copy one Voxel_space to another
+ */
 void copy_vs(Voxel_space *child, Voxel_space *parent) {
     child->num_voxels = parent->num_voxels;
     child->fitness = parent->fitness;
@@ -437,4 +461,32 @@ void copy_vs(Voxel_space *child, Voxel_space *parent) {
         child->tree[j].material = parent->tree[j].material;
         child->tree[j].type = parent->tree[j].type;
     }
+}
+
+/*
+ * calculate diversity based on avg position of empty cubes
+ */
+double calculate_diversity(Voxel_space **parent) {
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    int avg_pos = 0;
+    double mse;
+    for (int i = 0; i < POP_SIZE; i++) {
+        for (int j = 0; j < max_voxels; j++) {
+            if (!parent[i]->tree[j].exists) {
+                avg_pos += j;
+            }
+        }
+    }
+    avg_pos /= POP_SIZE * max_voxels;
+    for (int i = 0; i < POP_SIZE; i++) {
+        int sum = 0;
+        for (int j = 0; j < max_voxels; j++) {
+            if (!parent[i]->tree[j].exists) {
+                sum += j;
+            }
+        }
+        mse += pow(sum - avg_pos, 2);
+    }
+    mse /= POP_SIZE;
+    return mse;
 }

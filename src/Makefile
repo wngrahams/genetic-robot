@@ -1,7 +1,7 @@
 CC  = gcc
 CXX = g++
 
-INCLUDES = 
+INCLUDES =
 
 CFLAGS   = -O0 -g -Wall -Werror $(INCLUDES)
 CXXFLAGS = -O0 -g -Wall -Werror -std=c++11 $(INCLUDES)
