@@ -3,10 +3,6 @@
  *
  */
 
-#if defined(__GNUC__) && (__GNUC___ >= 7)
-#include <omp.h>
-#endif
-
 #include "physics.h"
 
 void init_masses_and_springs_from_voxel_space(Mass** masses, 
