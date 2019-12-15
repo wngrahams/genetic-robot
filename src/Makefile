@@ -1,13 +1,13 @@
 CC  = gcc-9
-CXX = g++
+CXX = g++-9
 
 INCLUDES = 
 
-CFLAGS   = -O0 -g -Wall -Werror $(INCLUDES)
-CXXFLAGS = -O0 -g -Wall -Werror -std=c++11 $(INCLUDES)
+CFLAGS   = -O3 -g -Wall -Werror -fopenmp $(INCLUDES)
+CXXFLAGS = -O3 -g -Wall -Werror -fopenmp -std=c++11 $(INCLUDES)
 
 LDFLAGS = -g -fopenmp 
-LDLIBS  = -lm -lstdc++ 
+LDLIBS  = -lm -lstdc++ -pthread 
 
 executables = driver
 objects = driver.o ga-utils.o voxels.o physics.o

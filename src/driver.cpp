@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
         population[i] = indiv;
     }
 
-    simulate_population_cpu(population, TEST_POP_SIZE, DEFAULT_START_HEIGHT+10.);
+    simulate_population_cpu(population, TEST_POP_SIZE, DEFAULT_START_HEIGHT+1.);
 
     for (int i=0; i<TEST_POP_SIZE; i++) {
         printf("indiv %d distance travelled: %f, fitness: %f\n",

@@ -3,9 +3,7 @@
  *
  */
 
-#if defined(__GNUC__) && (__GNUC___ >= 7)
 #include <omp.h>
-#endif
 
 #include "physics.h"
 
@@ -356,6 +354,7 @@ void simulate_population_cpu(Voxel_space** population,
             
         // this assumes each cube has the same maximum dimensions !!!
         // spring loop:
+        #pragma omp parallel for num_threads(4)
         for (int i=0; i<(max_springs_per_indiv*pop_size); i++) {
 
             int indiv_idx = i / max_springs_per_indiv;
@@ -412,17 +411,22 @@ void simulate_population_cpu(Voxel_space** population,
                 * (stretched_len - pop_springs[indiv_idx][spring_idx]->l0);
             
             // update force vectors:
+            #pragma omp atomic update
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m1 + 0]
                 += force_normalized*(x2 - x1)/stretched_len;
+            #pragma omp atomic update
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m1 + 1]
                 += force_normalized*(y2 - y1)/stretched_len;
+            #pragma omp atomic update
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m1 + 2]
                 += force_normalized*(z2 - z1)/stretched_len;
-
+            #pragma omp atomic update
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 0]
                 -= force_normalized*(x2 - x1)/stretched_len;
+            #pragma omp atomic update
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 1]
                 -= force_normalized*(y2 - y1)/stretched_len;
+            #pragma omp atomic update
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*m2 + 2]
                 -= force_normalized*(z2 - z1)/stretched_len;
 
