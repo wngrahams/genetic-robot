@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define F_PI 3.141592653f
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -28,11 +28,17 @@ extern "C" {
 #define NUM_E_3X3 12
 #define NUM_C_3X3 8
 
+#ifdef __cplusplus
 #define INIT_VOXEL_SPACE(name) \
     Voxel_space* name = (Voxel_space*)malloc(sizeof(Voxel_space)); \
     CHECK_MALLOC_ERR((name)); \
     init_voxel_space((name)); 
-
+#else
+#define INIT_VOXEL_SPACE(name) \
+    Voxel_space* name = malloc(sizeof(Voxel_space)); \
+    CHECK_MALLOC_ERR((name)); \
+    init_voxel_space((name));
+#endif
 
 typedef enum voxel_type {
 
@@ -43,6 +49,7 @@ typedef enum voxel_type {
 
 } __attribute__ ((packed)) voxel_type;
 
+#define NUM_MATERIALS 4
 typedef enum material { 
 
     UNKNOWN=-1,
@@ -59,7 +66,7 @@ typedef enum material {
 typedef struct Voxel {
 
     voxel_type type;
-    int position[3];
+    int pos[3];
     int exists;
     material_t material;
     
@@ -73,6 +80,7 @@ typedef struct Voxel_space {
     Voxel* tree;
     int num_voxels;
     float fitness;
+    float simulated_dist;
 
 } Voxel_space;
 
