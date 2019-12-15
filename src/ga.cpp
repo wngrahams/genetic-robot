@@ -168,6 +168,10 @@ void ga_loop(int thread_num) {
         for (int i = 0; i < POP_SIZE; i++) {
             learning_file << parent[max_fit_index]->fitness << ",";
         }
+        // write to dot plot file
+//        for (int i = 0; i < POP_SIZE; i++) {
+//            learning_file << parent[max_fit_index]->fitness << ",";
+//        }
 
         // print fitnesses of population
         if (eval % POP_SIZE == 0) {
@@ -445,4 +449,9 @@ void copy_vs(Voxel_space *child, Voxel_space *parent) {
         child->tree[j].material = parent->tree[j].material;
         child->tree[j].type = parent->tree[j].type;
     }
+}
+
+double calculate_diversity() {
+
+
 }

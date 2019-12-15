@@ -32,5 +32,6 @@ void mutation(Voxel_space *);
 void selection(Voxel_space **, Voxel_space **, Voxel_space **);
 void randomize_array(int *);
 void copy_vs(Voxel_space *, Voxel_space *);
+double calculate_diversity();
 
 #endif //_GA_H
