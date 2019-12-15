@@ -15,7 +15,8 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
                                               const int max_num_springs,
                                               int* mass_count,
                                               int* spring_count,
-                                              Voxel_space* vs) {
+                                              Voxel_space* vs,
+                                              const float start_height) {
 
     for (int i=0; i<max_num_masses; i++) {
         masses[i] = NULL;
@@ -33,7 +34,8 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
                     0, 
                     masses, 
                     masses_per_dim, 
-                    mass_count);
+                    mass_count,
+                    start_height);
 
 
     init_springs(springs, masses, spring_count, max_num_masses, masses_per_dim);
@@ -70,7 +72,8 @@ void dfs_init_masses(Voxel_space* vs,
                     const int idx, 
                     Mass** masses, 
                     const int masses_per_dim, 
-                    int* mass_count) {
+                    int* mass_count,
+                    const float start_height) {
 
     if (idx < total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)
         && 1 == vs->tree[idx].exists) {
@@ -79,10 +82,10 @@ void dfs_init_masses(Voxel_space* vs,
             for (int y=0; y<2; y++) {
                 for (int z=0; z<2; z++) {
                     
-                    int mass_idx = vs->tree[idx].pos[0]+HEIGHT_OFFSET+x
-                        + masses_per_dim*(vs->tree[idx].pos[1]+HEIGHT_OFFSET+y)
+                    int mass_idx = vs->tree[idx].pos[0]+POS_OFFSET+x
+                        + masses_per_dim*(vs->tree[idx].pos[1]+POS_OFFSET+y)
                         + ipow(masses_per_dim, 2)
-                            *(vs->tree[idx].pos[2]+HEIGHT_OFFSET+z);
+                            *(vs->tree[idx].pos[2]+POS_OFFSET+z);
 
                     //printf("calculated mass idx: %d\n", mass_idx);
 
@@ -93,13 +96,14 @@ void dfs_init_masses(Voxel_space* vs,
             			masses[mass_idx] = malloc(sizeof(Mass));
             			masses[mass_idx]->m = MASS_M;
             			masses[mass_idx]->pos[0] = 
-                            (vs->tree[idx].pos[0]+HEIGHT_OFFSET+x+0.0) * L0_SIDE;
+                            (vs->tree[idx].pos[0]+POS_OFFSET+x+0.0) * L0_SIDE;
 
 						masses[mass_idx]->pos[1] = 
-                            (vs->tree[idx].pos[1]+HEIGHT_OFFSET+y+0.0) * L0_SIDE;
+                            (vs->tree[idx].pos[1]+POS_OFFSET+y+0.0) * L0_SIDE;
 
 						masses[mass_idx]->pos[2] = 
-                            (vs->tree[idx].pos[2]+HEIGHT_OFFSET+z+0.0) * L0_SIDE;
+                            (vs->tree[idx].pos[2]+POS_OFFSET+z+0.0) * L0_SIDE
+                            + start_height;
 
             			for (int i=0; i<3; i++) {
                 			masses[mass_idx]->vel[i] = 0.0f;
@@ -122,7 +126,8 @@ void dfs_init_masses(Voxel_space* vs,
                                 i, 
                                 masses, 
                                 masses_per_dim, 
-                                mass_count);
+                                mass_count,
+                                start_height);
             }
         }
 
@@ -131,7 +136,8 @@ void dfs_init_masses(Voxel_space* vs,
                             get_child_index_of_m(idx), 
                             masses, 
                             masses_per_dim, 
-                            mass_count);
+                            mass_count,
+                            start_height);
         }
 
         else if (EDGE == current_type) {
@@ -140,14 +146,16 @@ void dfs_init_masses(Voxel_space* vs,
                                 get_child_index_of_e(idx, MIDDLE, i), 
                                 masses, 
                                 masses_per_dim, 
-                                mass_count);
+                                mass_count,
+                                start_height);
             }
               
             dfs_init_masses(vs, 
                             get_child_index_of_e(idx, EDGE, 0), 
                             masses, 
                             masses_per_dim, 
-                            mass_count);
+                            mass_count,
+                            start_height);
         }
 
         else if (CORNER == current_type) {
@@ -156,7 +164,8 @@ void dfs_init_masses(Voxel_space* vs,
                                 get_child_index_of_c(idx, MIDDLE, i), 
                                 masses, 
                                 masses_per_dim, 
-                                mass_count);
+                                mass_count,
+                                start_height);
             }
 
             for (int i=0; i<3; i++) {
@@ -164,14 +173,16 @@ void dfs_init_masses(Voxel_space* vs,
                                 get_child_index_of_c(idx, EDGE, i), 
                                 masses, 
                                 masses_per_dim, 
-                                mass_count);
+                                mass_count,
+                                start_height);
             }
 
             dfs_init_masses(vs, 
                             get_child_index_of_c(idx, CORNER, 0), 
                             masses, 
                             masses_per_dim, 
-                            mass_count);
+                            mass_count,
+                            start_height);
         }
 
     }  // end if v->exists 
@@ -274,7 +285,9 @@ loop_end: ;
 /*
  * runs the physics simulation for each member of the population
  */
-void simulate_population_cpu(Voxel_space** population, const int pop_size) {
+void simulate_population_cpu(Voxel_space** population, 
+                             const int pop_size,
+                             const float start_height) {
 
     // initialize masses and springs for each member of the population
     int max_masses_per_indiv = get_total_possible_masses(VOX_SPACE_MAX_DEPTH);
@@ -309,7 +322,8 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
                                                  max_springs_per_indiv,
                                                  &(pop_mass_counts[i]),
                                                  &(pop_spring_counts[i]),
-                                                 population[i]);
+                                                 population[i],
+                                                 start_height);
     }
     
     float* force_vectors = malloc(sizeof(float) * pop_size*max_masses_per_indiv*3);

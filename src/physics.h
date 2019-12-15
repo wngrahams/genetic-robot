@@ -18,7 +18,7 @@ extern "C" {
 #define MAX_MASSES_PER_VOXEL 8
 #define MAX_SPRINGS_PER_VOXEL 28
 
-#define HEIGHT_OFFSET VOX_SPACE_MAX_DEPTH
+#define POS_OFFSET VOX_SPACE_MAX_DEPTH
 
 // world variables
 #define G                 9.80665f
@@ -36,6 +36,8 @@ extern "C" {
 #define L0_SIDE   0.1f
 #define L0_FACE   0.141421f
 #define L0_MIDDLE 0.173205f
+
+#define DEFAULT_START_HEIGHT (L0_SIDE/100.0f)
 
 #define K_HARD   10000.0f
 #define K_SOFT   500.0f
@@ -81,14 +83,16 @@ void init_masses_and_springs_from_voxel_space(Mass**,
                                               const int,
                                               int*,
                                               int*,
-                                              Voxel_space*);
+                                              Voxel_space*,
+                                              const float);
 int get_total_possible_masses(const int);
 int get_total_possible_springs(const int); 
 void dfs_init_masses(Voxel_space*, 
                      const int, 
                      Mass**, 
                      const int, 
-                     int*);
+                     int*,
+                     const float);
 void init_springs(Spring**, Mass**, int*, const int, const int);
 
 static inline float get_b_from_mat(const int mat, const float l0) {
@@ -96,7 +100,7 @@ static inline float get_b_from_mat(const int mat, const float l0) {
     return l0*material_to_b_map[mat];
 }
 
-void simulate_population_cpu(Voxel_space**, const int); 
+void simulate_population_cpu(Voxel_space**, const int, const float); 
 
 static float inline dist3d(const float x2, const float x1,
                            const float y2, const float y1,

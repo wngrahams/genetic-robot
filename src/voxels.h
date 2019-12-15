@@ -28,11 +28,17 @@ extern "C" {
 #define NUM_E_3X3 12
 #define NUM_C_3X3 8
 
+#ifdef __cplusplus
 #define INIT_VOXEL_SPACE(name) \
     Voxel_space* name = (Voxel_space*)malloc(sizeof(Voxel_space)); \
     CHECK_MALLOC_ERR((name)); \
     init_voxel_space((name)); 
-
+#else
+#define INIT_VOXEL_SPACE(name) \
+    Voxel_space* name = malloc(sizeof(Voxel_space)); \
+    CHECK_MALLOC_ERR((name)); \
+    init_voxel_space((name));
+#endif
 
 typedef enum voxel_type {
 
