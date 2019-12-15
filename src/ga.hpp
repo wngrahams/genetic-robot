@@ -4,8 +4,8 @@
 #include "voxels.h"
 
 // GA macros
-#define POP_SIZE 6 // should be even
-#define NUM_OF_EVALS 100 // ideally a multiple of POP_SIZE
+#define POP_SIZE 16 // should be even
+#define NUM_OF_EVALS 1000 // ideally a multiple of POP_SIZE
 #define CHANCE_OF_MUT 0.3
 #define NUM_OF_MUT 1
 
@@ -37,3 +37,4 @@ void copy_vs(Voxel_space *, Voxel_space *);
 double calculate_diversity(Voxel_space **);
 
 #endif //_GA_H
+

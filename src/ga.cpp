@@ -187,6 +187,12 @@ void ga_loop(int thread_num) {
         }
     }
 
+    // end timer
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
+    std::cout << "iter/sec: " << iters_per_sec << "\n";
+
     // clean up parent generation
     for (int i=0; i<POP_SIZE; i++) {
         delete_voxel_space(parent[i]);
@@ -469,7 +475,7 @@ void copy_vs(Voxel_space *child, Voxel_space *parent) {
 double calculate_diversity(Voxel_space **parent) {
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
     int avg_pos = 0;
-    double mse;
+    double mse = 0.0;
     for (int i = 0; i < POP_SIZE; i++) {
         for (int j = 0; j < max_voxels; j++) {
             if (!parent[i]->tree[j].exists) {
