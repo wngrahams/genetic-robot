@@ -85,21 +85,6 @@ void ga_loop(int thread_num) {
 
     // genetic algorithm loop
     for (int eval = 0; eval < NUM_OF_EVALS; eval+=POP_SIZE) {
-        for (int i=0; i<POP_SIZE; i++) {
-            printf("parent %d:\n", i);
-            for (int j=0; j<max_voxels; j++) {
-                printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
-                       j,
-                       parent[i]->tree[j].pos[0],
-                       parent[i]->tree[j].pos[1],
-                       parent[i]->tree[j].pos[2],
-                       parent[i]->tree[j].exists,
-                       parent[i]->tree[j].material,
-                       parent[i]->tree[j].type);
-
-            }
-            printf("\n");
-        }
 
         // initialize children population as copy of parent population
         Voxel_space* child[POP_SIZE];
@@ -112,22 +97,6 @@ void ga_loop(int thread_num) {
 //                memcpy(&child[i]->tree[j], &parent[i]->tree[j], sizeof(Voxel));
 //            }
             copy_vs(child[i], parent[i]);
-        }
-
-        for (int i=0; i<POP_SIZE; i++) {
-            printf("child %d:\n", i);
-            for (int j=0; j<max_voxels; j++) {
-                printf("\tvox[%d]: (%d, %d, %d), exists=%d, material=%d, type=%d\n",
-                       j,
-                       child[i]->tree[j].pos[0],
-                       child[i]->tree[j].pos[1],
-                       child[i]->tree[j].pos[2],
-                       child[i]->tree[j].exists,
-                       child[i]->tree[j].material,
-                       child[i]->tree[j].type);
-
-            }
-            printf("\n");
         }
 
         // generate random order for crossover
@@ -145,8 +114,8 @@ void ga_loop(int thread_num) {
 
         // calculate fitness
         for (int i = 0; i < POP_SIZE; i++) {
-//            simulate_population_cpu(parent, POP_SIZE, DEFAULT_START_HEIGHT);
-//            simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
+            simulate_population_cpu(parent, POP_SIZE, DEFAULT_START_HEIGHT);
+            simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
         }
 
         // initialize all population as copy of parent + child population
@@ -164,12 +133,12 @@ void ga_loop(int thread_num) {
         for (int i = POP_SIZE; i < POP_SIZE*2; i++) {
             INIT_VOXEL_SPACE(temp);
             all[i] = temp;
-            all[i]->num_voxels = child[i]->num_voxels;
-            all[i]->fitness = child[i]->fitness;
+            all[i]->num_voxels = child[i - POP_SIZE]->num_voxels;
+            all[i]->fitness = child[i - POP_SIZE]->fitness;
 //            for (int j = 0; j < max_voxels; j++) {
-//                memcpy(&all[i]->tree[j], &child[i]->tree[j], sizeof(Voxel));
+//                memcpy(&all[i]->tree[j], &child[i - POP_SIZE]->tree[j], sizeof(Voxel));
 //            }
-            copy_vs(all[i], child[i]);
+            copy_vs(all[i], child[i - POP_SIZE]);
         }
         // selection
         selection(parent, child, all);
@@ -420,8 +389,11 @@ void selection(Voxel_space **parent, Voxel_space **child, Voxel_space **all) {
             best_child_index = i;
         }
     }
-    parent[0] = parent[best_parent_index];
-    parent[1] = child[best_child_index];
+//    parent[0] = parent[best_parent_index];
+//    parent[1] = child[best_child_index];
+    copy_vs(parent[0], parent[best_parent_index]);
+    copy_vs(parent[1], parent[best_child_index]);
+
 
     for (int i = 2; i < POP_SIZE; i++) {
         int m = compare(mt);
@@ -431,9 +403,11 @@ void selection(Voxel_space **parent, Voxel_space **child, Voxel_space **all) {
         }
 
         if (all[m]->fitness > all[n]->fitness) {
-            parent[i] = all[m];
+//            parent[i] = all[m];
+            copy_vs(parent[i], all[m]);
         } else {
-            parent[i] = all[n];
+//            parent[i] = all[n];
+            copy_vs(parent[i], all[n]);
         }
     }
 }
