@@ -371,18 +371,18 @@ void simulate_population_cpu(Voxel_space** population,
                 * sinf(OMEGA*t + pop_springs[indiv_idx][spring_idx]->c);
             
 #ifdef DEBUG
-//            printf("indiv: %d\n", indiv_idx);
+            printf("indiv: %d\n", indiv_idx);
             for (int j=0; j<max_masses_per_indiv; j++) {
                     
                 if (pop_masses[indiv_idx][j] != NULL) {
-//                    printf("mass %d:\tx: %f, y: %f, z: %f\n", j,
+                    printf("mass %d:\tx: %f, y: %f, z: %f\n", j,
                         pop_masses[indiv_idx][j]->pos[0],
                         pop_masses[indiv_idx][j]->pos[1],
                         pop_masses[indiv_idx][j]->pos[2]);
 
                 }   
             }
-//            printf("\n");
+            printf("\n");
 #endif
 
                 
