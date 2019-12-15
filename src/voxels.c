@@ -91,7 +91,7 @@ void init_3x3(Voxel* tree) {
     tree[0].pos[1] = 0; 
     tree[0].pos[2] = 0;
     tree[0].exists = 1;
-    tree[0].material = CONTRACT;
+    tree[0].material = UNKNOWN;
 
     // 'middle' voxels change the pos in one dimension:
     start = NUM_R_3X3;
