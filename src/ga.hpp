@@ -31,5 +31,6 @@ void crossover_exists(Voxel_space *, Voxel_space *, int p);
 void mutation(Voxel_space *);
 void selection(Voxel_space **, Voxel_space **, Voxel_space **);
 void randomize_array(int *);
+void copy_vs(Voxel_space *, Voxel_space *);
 
 #endif //_GA_H

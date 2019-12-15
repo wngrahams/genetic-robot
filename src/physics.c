@@ -25,8 +25,8 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
         springs[i] = NULL;
     }
 
-    printf("max_num_masses: %d\n", max_num_masses);
-    printf("max_num_springs: %d\n", max_num_springs);
+//    printf("max_num_masses: %d\n", max_num_masses);
+//    printf("max_num_springs: %d\n", max_num_springs);
 
     int masses_per_dim = (VOX_SPACE_MAX_DEPTH+1)*2;
 
@@ -39,8 +39,8 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
 
 
     init_springs(springs, masses, spring_count, max_num_masses, masses_per_dim);
-    printf("mass count: %d\n", *mass_count);
-    printf("spring count: %d\n", *spring_count);
+//    printf("mass count: %d\n", *mass_count);
+//    printf("spring count: %d\n", *spring_count);
     assert(*spring_count <= max_num_springs);
 
 }
@@ -371,18 +371,18 @@ void simulate_population_cpu(Voxel_space** population,
                 * sinf(OMEGA*t + pop_springs[indiv_idx][spring_idx]->c);
             
 #ifdef DEBUG
-            printf("indiv: %d\n", indiv_idx);
+//            printf("indiv: %d\n", indiv_idx);
             for (int j=0; j<max_masses_per_indiv; j++) {
                     
                 if (pop_masses[indiv_idx][j] != NULL) {
-                    printf("mass %d:\tx: %f, y: %f, z: %f\n", j,
+//                    printf("mass %d:\tx: %f, y: %f, z: %f\n", j,
                         pop_masses[indiv_idx][j]->pos[0],
                         pop_masses[indiv_idx][j]->pos[1],
                         pop_masses[indiv_idx][j]->pos[2]);
 
                 }   
             }
-            printf("\n");
+//            printf("\n");
 #endif
 
                 
