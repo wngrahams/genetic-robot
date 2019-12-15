@@ -2,19 +2,31 @@
  * driver.c
  */
 
+#include "physics.h"
 #include "voxels.h"
+
+#define TEST_POP_SIZE 4
 
 int main(int argc, char** argv) {
 
-    INIT_VOXEL_SPACE(indiv);
 
-    for (int i=0; i<total_voxels_at_depth(VOX_SPACE_MAX_DEPTH); i++) {
-        printf("%d: ", i);
-        printf("%d ", indiv->tree[i].type);
-        printf("(%d, ", indiv->tree[i].position[0]);
-        printf("%d, ", indiv->tree[i].position[1]);
-        printf("%d)\n", indiv->tree[i].position[2]);
+    Voxel_space* population[TEST_POP_SIZE];
+    for (int i=0; i<TEST_POP_SIZE; i++) {
+        INIT_VOXEL_SPACE(indiv);
+        population[i] = indiv;
     }
-    delete_voxel_space(indiv);
+
+    simulate_population_cpu(population, TEST_POP_SIZE);
+
+    for (int i=0; i<TEST_POP_SIZE; i++) {
+        printf("indiv %d distance travelled: %f, fitness: %f\n",
+               i,
+               population[i]->simulated_dist, 
+               population[i]->fitness);
+    }
+
+    for (int i=0; i<TEST_POP_SIZE; i++) {
+        delete_voxel_space(population[i]);
+    }
 }
 

@@ -67,6 +67,8 @@ void init_voxel_space(Voxel_space* vs) {
     }
 
     vs->num_voxels = 1;
+    vs->fitness = 0.0f;
+    vs->simulated_dist = 0.0f;
 }
 
 /*
@@ -85,44 +87,44 @@ void init_3x3(Voxel* tree) {
 
     // 'root' voxel at 0, 0, 0
     tree[0].type = ROOT;
-    tree[0].position[0] = 0; 
-    tree[0].position[1] = 0; 
-    tree[0].position[2] = 0;
+    tree[0].pos[0] = 0; 
+    tree[0].pos[1] = 0; 
+    tree[0].pos[2] = 0;
     tree[0].exists = 1;
     tree[0].material = UNKNOWN;
 
-    // 'middle' voxels change the position in one dimension:
+    // 'middle' voxels change the pos in one dimension:
     start = NUM_R_3X3;
     stop = NUM_R_3X3 + NUM_M_3X3;
     for (int i=0; i<(stop-start); i++) {
         tree[i+start].type = MIDDLE;
-        tree[i+start].position[0] = m_positions[3*i+0];
-        tree[i+start].position[1] = m_positions[3*i+1];
-        tree[i+start].position[2] = m_positions[3*i+2];
+        tree[i+start].pos[0] = m_positions[3*i+0];
+        tree[i+start].pos[1] = m_positions[3*i+1];
+        tree[i+start].pos[2] = m_positions[3*i+2];
         tree[i+start].exists = 0;
         tree[i+start].material = UNKNOWN;
     }
     
-    // 'edge' voxels change the position in two dimensions:
+    // 'edge' voxels change the pos in two dimensions:
     start = stop;
     stop += NUM_E_3X3;
     for (int i=0; i<(stop-start); i++) {
         tree[i+start].type = EDGE;
-        tree[i+start].position[0] = e_positions[3*i+0];
-        tree[i+start].position[1] = e_positions[3*i+1];
-        tree[i+start].position[2] = e_positions[3*i+2];
+        tree[i+start].pos[0] = e_positions[3*i+0];
+        tree[i+start].pos[1] = e_positions[3*i+1];
+        tree[i+start].pos[2] = e_positions[3*i+2];
         tree[i+start].exists = 0;
         tree[i+start].material = UNKNOWN;
     }
 
-    // 'corner' voxels change the position in three dimensions
+    // 'corner' voxels change the pos in three dimensions
     start = stop;
     stop += NUM_C_3X3;
     for (int i=0; i<(stop-start); i++) {
         tree[i+start].type = CORNER;
-        tree[i+start].position[0] = c_positions[3*i+0];
-        tree[i+start].position[1] = c_positions[3*i+1];
-        tree[i+start].position[2] = c_positions[3*i+2];
+        tree[i+start].pos[0] = c_positions[3*i+0];
+        tree[i+start].pos[1] = c_positions[3*i+1];
+        tree[i+start].pos[2] = c_positions[3*i+2];
         tree[i+start].exists = 0;
         tree[i+start].material = UNKNOWN;
     }
@@ -164,8 +166,8 @@ void init_c_children(Voxel* tree, const int parent_idx) {
     tree[c_idx].type = CORNER;
 
     for (int i=0; i<3; i++) {
-        tree[c_idx].position[i] = get_sign(tree[parent_idx].position[i])
-                                  + tree[parent_idx].position[i];
+        tree[c_idx].pos[i] = get_sign(tree[parent_idx].pos[i])
+                                  + tree[parent_idx].pos[i];
     }
 
     tree[c_idx].exists = 0;
@@ -240,7 +242,7 @@ void init_m_child(Voxel* tree, const int parent_idx) {
 }
 
 /*
- * initializes the position member of the given indicies of 'middle' voxels
+ * initializes the pos member of the given indicies of 'middle' voxels
  * in the voxel space
  */
 void init_m_positions(Voxel* tree, 
@@ -250,22 +252,22 @@ void init_m_positions(Voxel* tree,
 
     int* sorted_indices = malloc(sizeof(int) * 3);
     CHECK_MALLOC_ERR(sorted_indices);
-    get_sorted_indices(tree[parent_idx].position, sorted_indices);
+    get_sorted_indices(tree[parent_idx].pos, sorted_indices);
 
     for (int i=0; i<num_children; i++) {
         for (int j=0; j<3; j++) {
-            tree[children_indices[i]].position[j] = tree[parent_idx].position[j];
+            tree[children_indices[i]].pos[j] = tree[parent_idx].pos[j];
         }
 
-        tree[children_indices[i]].position[sorted_indices[i]]
-            += get_sign(tree[parent_idx].position[sorted_indices[i]]);
+        tree[children_indices[i]].pos[sorted_indices[i]]
+            += get_sign(tree[parent_idx].pos[sorted_indices[i]]);
     }
 
     free(sorted_indices);
 }
 
 /*
- * initializes the position member of the given indices of 'edge' voxels in the
+ * initializes the pos member of the given indices of 'edge' voxels in the
  * voxel space
  */
 void init_e_positions(Voxel* tree,
@@ -275,30 +277,30 @@ void init_e_positions(Voxel* tree,
 
     int* sorted_indices = malloc(sizeof(int) * 3);
     CHECK_MALLOC_ERR(sorted_indices);
-    get_sorted_indices(tree[parent_idx].position, sorted_indices);
+    get_sorted_indices(tree[parent_idx].pos, sorted_indices);
 
     for (int i=0; i<num_children; i++) {
         for (int j=0; j<3; j++) {
-            tree[children_indices[i]].position[j] = tree[parent_idx].position[j];
+            tree[children_indices[i]].pos[j] = tree[parent_idx].pos[j];
         }
 
-        tree[children_indices[i]].position[sorted_indices[i]]
-            += get_sign(tree[parent_idx].position[sorted_indices[i]]);
+        tree[children_indices[i]].pos[sorted_indices[i]]
+            += get_sign(tree[parent_idx].pos[sorted_indices[i]]);
 
-        tree[children_indices[i]].position[sorted_indices[MOD(i+1,3)]]
-            += get_sign(tree[parent_idx].position[sorted_indices[MOD(i+1,3)]]);
+        tree[children_indices[i]].pos[sorted_indices[MOD(i+1,3)]]
+            += get_sign(tree[parent_idx].pos[sorted_indices[MOD(i+1,3)]]);
     }
 
     free(sorted_indices);
 }
 
 /*
- * returns the indeces of the position array in decreasing order of the 
- * absolute value of the position in each dimension
+ * returns the indeces of the pos array in decreasing order of the 
+ * absolute value of the pos in each dimension
  */
-void get_sorted_indices(int* position, int* sorted_indices) {
+void get_sorted_indices(int* pos, int* sorted_indices) {
 
-    int pos_abs[3] = { abs(position[0]), abs(position[1]), abs(position[2]) };
+    int pos_abs[3] = { abs(pos[0]), abs(pos[1]), abs(pos[2]) };
 
     if (pos_abs[0] == pos_abs[1] && pos_abs[0] == pos_abs[2]) {
         for (int i=0; i<3; i++) {
