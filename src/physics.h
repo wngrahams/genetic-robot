@@ -43,13 +43,13 @@ extern "C" {
 
 // These values must be multiplied by L0 before assigning to the b parameter!!!
 #define B_STATIC 0.0f
-#define B_MUSCLE 0.5f
+#define B_MUSCLE 0.4f
 
 static const float material_to_k_map[4]={ K_HARD,   K_SOFT,   K_MUSCLE, K_MUSCLE };
 static const float material_to_b_map[4]={ B_STATIC, B_STATIC, B_MUSCLE, B_MUSCLE };
 static const float material_to_c_map[4]={ 0.0f,     0.0f,     0.0f,     (F_PI/2.)};
 
-static const float length_map[4]={ 0, L0_SIDE, L0_FACE, L0_MIDDLE };
+static const float length_map[4]={ 0.0f, L0_SIDE, L0_FACE, L0_MIDDLE };
 
 typedef struct Mass {
     

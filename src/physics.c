@@ -3,8 +3,6 @@
  *
  */
 
-#include <assert.h>
-
 #if defined(__GNUC__) && (__GNUC___ >= 7)
 #include <omp.h>
 #endif
@@ -96,8 +94,10 @@ void dfs_init_masses(Voxel_space* vs,
             			masses[mass_idx]->m = MASS_M;
             			masses[mass_idx]->pos[0] = 
                             (vs->tree[idx].pos[0]+HEIGHT_OFFSET+x+0.0) * L0_SIDE;
+
 						masses[mass_idx]->pos[1] = 
                             (vs->tree[idx].pos[1]+HEIGHT_OFFSET+y+0.0) * L0_SIDE;
+
 						masses[mass_idx]->pos[2] = 
                             (vs->tree[idx].pos[2]+HEIGHT_OFFSET+z+0.0) * L0_SIDE;
 
@@ -197,14 +197,10 @@ void init_springs(Spring** springs,
                             || (x == 0 && y == 1) 
                             || (x == 0 && y == 0 && z == 1)) {
                             
-                            //printf("(x, y, z): (%d, %d, %d)\n", x, y, z);
-                            
                             int neighbor_idx = i 
                                 + x 
                                 + y * masses_per_dim
                                 + z * ipow(masses_per_dim, 2);
-
-                            //printf("neighbor idx: %d\n", neighbor_idx);
 
                             if (neighbor_idx >= 0
                                 && neighbor_idx < max_num_masses
@@ -235,8 +231,9 @@ void init_springs(Spring** springs,
 
                                 springs[*num_springs]->k = avg_k;
                                     
-                                int dimension_diff = x + y + z;
+                                int dimension_diff = x + abs(y) + abs(z);
                                 float rest_length = length_map[dimension_diff];
+                                assert(rest_length > 0.0f);
                                 springs[*num_springs]->l0 = rest_length;
                                 springs[*num_springs]->a = rest_length; 
 
@@ -249,13 +246,6 @@ void init_springs(Spring** springs,
                                                    springs[*num_springs]->l0);
                                 avg_b = (b1 + b2)/2.0f;
 
-                                printf("i: %d\n", i); 
-                                printf("mat1: %d, mat2: %d\n",
-                                        masses[i]->material, 
-                                        masses[neighbor_idx]->material);
-                                printf("b1: %.2f, b2: %.2f, bavg: %.2f\n",
-                                        b1, b2, avg_b);
-            
                                 springs[*num_springs]->b = avg_b;
 
                                 float avg_c;
@@ -321,7 +311,6 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
                                                  &(pop_spring_counts[i]),
                                                  population[i]);
     }
-
     
     float* force_vectors = malloc(sizeof(float) * pop_size*max_masses_per_indiv*3);
     CHECK_MALLOC_ERR(force_vectors);
@@ -339,7 +328,7 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
                                  max_masses_per_indiv, 
                                  &(centers_of_mass_i[3*i]));
     }
-
+    
     // this sucks but so do I
     int masses_per_indiv = max_masses_per_indiv;
    
@@ -358,9 +347,6 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
             int indiv_idx = i / max_springs_per_indiv;
             int spring_idx = i % max_springs_per_indiv;
 
-            //printf("indiv_idx: %d\n", indiv_idx);
-            //printf("spring_idx: %d\n", spring_idx);
-
             // make sure spring exists (sorry not tabbing everything else again):
             if (NULL != pop_springs[indiv_idx][spring_idx]) {
                 
@@ -369,19 +355,43 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
                 pop_springs[indiv_idx][spring_idx]->a
                 + pop_springs[indiv_idx][spring_idx]->b 
                 * sinf(OMEGA*t + pop_springs[indiv_idx][spring_idx]->c);
+            
+#ifdef DEBUG
+            printf("indiv: %d\n", indiv_idx);
+            for (int j=0; j<max_masses_per_indiv; j++) {
+                    
+                if (pop_masses[indiv_idx][j] != NULL) {
+                    printf("mass %d:\tx: %f, y: %f, z: %f\n", j,
+                        pop_masses[indiv_idx][j]->pos[0],
+                        pop_masses[indiv_idx][j]->pos[1],
+                        pop_masses[indiv_idx][j]->pos[2]);
+
+                }   
+            }
+            printf("\n");
+#endif
+
                 
                         
             // apply spring forces to masses
             int m1 = pop_springs[indiv_idx][spring_idx]->m1;
             int m2 = pop_springs[indiv_idx][spring_idx]->m2;
-            int x1 = pop_masses[indiv_idx][m1]->pos[0];
-            int y1 = pop_masses[indiv_idx][m1]->pos[1];
-            int z1 = pop_masses[indiv_idx][m1]->pos[2];
-            int x2 = pop_masses[indiv_idx][m2]->pos[0];
-            int y2 = pop_masses[indiv_idx][m2]->pos[1];
-            int z2 = pop_masses[indiv_idx][m2]->pos[2];
-
+            float x1 = pop_masses[indiv_idx][m1]->pos[0];
+            float y1 = pop_masses[indiv_idx][m1]->pos[1];
+            float z1 = pop_masses[indiv_idx][m1]->pos[2];
+            float x2 = pop_masses[indiv_idx][m2]->pos[0];
+            float y2 = pop_masses[indiv_idx][m2]->pos[1];
+            float z2 = pop_masses[indiv_idx][m2]->pos[2];
+            
             float stretched_len = dist3d(x2, x1, y2, y1, z2, z1);
+
+#ifdef DEBUG
+            printf("indiv: %d, m1: %d, m2: %d\n", indiv_idx, m1, m2);
+            printf("x1: %f, x2: %f, y1: %f, y2: %f, z1: %f, z2: %f\n", x1, x2, y1, y2, z1, z2);
+            printf("stretched len: %f\n", stretched_len);
+#endif
+
+            //assert(stretched_len > 0.001);
 
             float force_normalized = 
                 pop_springs[indiv_idx][spring_idx]->k
@@ -415,6 +425,20 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
 
             // make sure mass exists:
             if (NULL != pop_masses[indiv_idx][mass_idx]) {
+
+#ifdef DEBUG
+            if (0 == sim_i) {
+                printf("starting positions for indiv %d mass %d\n", indiv_idx, mass_idx);
+                printf("x: %f\n", pop_masses[indiv_idx][mass_idx]->pos[0]);
+                printf("y: %f\n", pop_masses[indiv_idx][mass_idx]->pos[1]);
+                printf("z: %f\n", pop_masses[indiv_idx][mass_idx]->pos[2]);
+                printf("force vecs before calcs for indiv %d mass %d\n", indiv_idx, mass_idx);
+                printf("force idx: %d\n", (masses_per_indiv*3)*indiv_idx+3*mass_idx+0);
+                printf("x: %f\n", force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+0]);
+                printf("y: %f\n", force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+1]);
+                printf("z: %f\n", force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+2]);
+            }
+#endif
 
             // gravitational force:
             force_vectors[(masses_per_indiv*3)*indiv_idx + 3*mass_idx + 2]
@@ -463,6 +487,16 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
             
             }  // end ground forces
 
+#ifdef DEBUG
+            if (0 == sim_i) {
+                printf("first round of force vecs for indiv %d mass %d\n", indiv_idx, mass_idx);
+                printf("x: %f\n", force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+0]);
+                printf("y: %f\n", force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+1]);
+                printf("z: %f\n", force_vectors[(masses_per_indiv*3)*indiv_idx+3*mass_idx+2]);
+            }
+#endif
+
+
             // update positions:
             for (int j=0; j<3; j++) {
                 // acceleration:
@@ -476,7 +510,7 @@ void simulate_population_cpu(Voxel_space** population, const int pop_size) {
 
                 // position:
                 pop_masses[indiv_idx][mass_idx]->pos[j] +=
-                    pop_masses[indiv_idx][mass_idx]->vel[j] * DT; 
+                    pop_masses[indiv_idx][mass_idx]->vel[j] * DT;                 
             }
 
             // apply height penalty to fitness:
