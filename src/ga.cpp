@@ -118,8 +118,8 @@ void ga_loop(int thread_num) {
 
         // calculate fitness
         for (int i = 0; i < POP_SIZE; i++) {
-            simulate_population_cpu(parent, POP_SIZE, DEFAULT_START_HEIGHT);
-            simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
+            simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
+            simulate_population_cpu(child, POP_SIZE, START_HEIGHT);
         }
 
         // print fitnesses of population
@@ -186,6 +186,21 @@ void ga_loop(int thread_num) {
             }
         }
     }
+
+    // find most fit individual
+    int max_fit_index = 0;
+    for (int i = 0; i < POP_SIZE; i++) {
+        if (parent[i]->fitness > parent[max_fit_index]->fitness) {
+            max_fit_index = i;
+        }
+    }
+    std::cout << "most fit individual:\n";
+    std::cout << "\tfitness: " << parent[max_fit_index]->fitness << std::endl;
+    std::cout << "\tdist traveled: ";
+    std::cout << parent[max_fit_index]->simulated_dist << std::endl;
+
+    export_to_gl(parent[max_fit_index], START_HEIGHT);
+
 
     // end timer
     clock_t end = clock();
