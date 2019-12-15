@@ -35,6 +35,10 @@ void ga_loop(int thread_num) {
     // initialize files
     std::ofstream learning_file;
     learning_file.open(std::to_string(thread_num) + LEARNING_TXT);
+    std::ofstream dot_file;
+    dot_file.open(std::to_string(thread_num) + DOT_TXT);
+    std::ofstream diversity_file;
+    diversity_file.open(std::to_string(thread_num) + DIVERSITY_TXT);
 
     // declare variables
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
@@ -169,9 +173,11 @@ void ga_loop(int thread_num) {
             learning_file << parent[max_fit_index]->fitness << ",";
         }
         // write to dot plot file
-//        for (int i = 0; i < POP_SIZE; i++) {
-//            learning_file << parent[max_fit_index]->fitness << ",";
-//        }
+        for (int i = 0; i < POP_SIZE; i++) {
+            dot_file << eval << "," << parent[i]->fitness << "\n";
+        }
+        // calculate and write to diversity file
+        diversity_file << calculate_diversity(parent) << ",";
 
         // print fitnesses of population
         if (eval % POP_SIZE == 0) {
@@ -424,6 +430,9 @@ void selection(Voxel_space **parent, Voxel_space **child, Voxel_space **all) {
     }
 }
 
+/*
+ * create random array
+ */
 void randomize_array(int *order) {
     // create vector with order of parents to be crossed over
     for (int i = 0; i < POP_SIZE; i++) {
@@ -437,6 +446,9 @@ void randomize_array(int *order) {
     }
 }
 
+/*
+ * copy one Voxel_space to another
+ */
 void copy_vs(Voxel_space *child, Voxel_space *parent) {
     child->num_voxels = parent->num_voxels;
     child->fitness = parent->fitness;
@@ -451,7 +463,30 @@ void copy_vs(Voxel_space *child, Voxel_space *parent) {
     }
 }
 
-double calculate_diversity() {
-
-
+/*
+ * calculate diversity based on avg position of empty cubes
+ */
+double calculate_diversity(Voxel_space **parent) {
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    int avg_pos = 0;
+    double mse;
+    for (int i = 0; i < POP_SIZE; i++) {
+        for (int j = 0; j < max_voxels; j++) {
+            if (!parent[i]->tree[j].exists) {
+                avg_pos += j;
+            }
+        }
+    }
+    avg_pos /= POP_SIZE * max_voxels;
+    for (int i = 0; i < POP_SIZE; i++) {
+        int sum = 0;
+        for (int j = 0; j < max_voxels; j++) {
+            if (!parent[i]->tree[j].exists) {
+                sum += j;
+            }
+        }
+        mse += pow(sum - avg_pos, 2);
+    }
+    mse /= POP_SIZE;
+    return mse;
 }

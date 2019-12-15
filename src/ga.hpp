@@ -20,6 +20,8 @@
 
 // file macros
 #define LEARNING_TXT "learningcurve_ga.txt" // for learning curve
+#define DOT_TXT "dotplot_ga.txt"
+#define DIVERSITY_TXT "diversity_ga.txt"
 
 void ga_loop(int);
 void initialize_random_robot(Voxel_space *);
@@ -32,6 +34,6 @@ void mutation(Voxel_space *);
 void selection(Voxel_space **, Voxel_space **, Voxel_space **);
 void randomize_array(int *);
 void copy_vs(Voxel_space *, Voxel_space *);
-double calculate_diversity();
+double calculate_diversity(Voxel_space **);
 
 #endif //_GA_H
