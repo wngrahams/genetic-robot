@@ -91,7 +91,7 @@ void init_3x3(Voxel* tree) {
     tree[0].pos[1] = 0; 
     tree[0].pos[2] = 0;
     tree[0].exists = 1;
-    tree[0].material = UNKNOWN;
+    tree[0].material = BONE;
 
     // 'middle' voxels change the pos in one dimension:
     start = NUM_R_3X3;
@@ -295,8 +295,8 @@ void init_e_positions(Voxel* tree,
 }
 
 /*
- * returns the indeces of the pos array in decreasing order of the 
- * absolute value of the pos in each dimension
+ * returns the indices of the position array in decreasing order of the
+ * absolute value of the position in each dimension
  */
 void get_sorted_indices(int* pos, int* sorted_indices) {
 

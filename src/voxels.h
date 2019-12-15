@@ -42,21 +42,21 @@ extern "C" {
 
 typedef enum voxel_type {
 
-    ROOT,
-    MIDDLE,
-    EDGE,
-    CORNER
+    ROOT=0,
+    MIDDLE=1,
+    EDGE=2,
+    CORNER=3
 
 } __attribute__ ((packed)) voxel_type;
 
 #define NUM_MATERIALS 4
 typedef enum material { 
 
-    UNKNOWN=-1, 
-    HARD=0, 
-    SOFT=1, 
-    EXPAND=2, 
-    CONTRACT=3 
+    UNKNOWN=-1,
+    BONE=0,
+    TISSUE=1,
+    EXPAND=2,
+    CONTRACT=3
 
 } __attribute__ ((packed)) material_t;
 
