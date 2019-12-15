@@ -13,6 +13,10 @@
 
 #define F_PI 3.141592653f
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
@@ -32,8 +36,9 @@
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
 
 
-#define CHECK_MALLOC_ERR(ptr) (likely(!check_malloc_err(ptr)) ? (exit(1)) : (1))
+#define CHECK_MALLOC_ERR(ptr) (likely(!check_malloc_err(ptr)) ? (int_exit(1)) : (1))
 
+static inline int int_exit(int x) { exit(x); return x; }
 
 /*
  * This function checks if malloc() returned NULL. If it did, the program
@@ -61,6 +66,11 @@ int64_t ipow(int64_t, uint8_t);
  * returns -1, 0, or 1
  */
 static inline int get_sign(int x) { return (x > 0) - (x < 0); }
-    
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

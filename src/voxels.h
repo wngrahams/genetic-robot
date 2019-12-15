@@ -11,6 +11,10 @@
 
 #include "ga-utils.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DEPTH_3X3   1
 #define DEPTH_5X5   2
 #define DEPTH_7X7   3
@@ -25,7 +29,7 @@
 #define NUM_C_3X3 8
 
 #define INIT_VOXEL_SPACE(name) \
-    Voxel_space* name = malloc(sizeof(Voxel_space)); \
+    Voxel_space* name = (Voxel_space*)malloc(sizeof(Voxel_space)); \
     CHECK_MALLOC_ERR((name)); \
     init_voxel_space((name)); 
 
@@ -121,6 +125,10 @@ void delete_voxel_space(Voxel_space*);
 int get_child_index_of_m(const int);
 int get_child_index_of_e(const int, const voxel_type, const int);
 int get_child_index_of_c(const int, const voxel_type, const int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
