@@ -88,41 +88,40 @@ void ga_loop(int thread_num) {
 
         // initialize children population as copy of parent population
         Voxel_space* child[POP_SIZE];
-//        for (int i = 0; i < POP_SIZE; i++) {
-//            INIT_VOXEL_SPACE(temp);
-//            child[i] = temp;
-//            child[i]->num_voxels = parent[i]->num_voxels;
-//            child[i]->fitness = parent[i]->fitness;
-////            for (int j = 0; j < max_voxels; j++) {
-////                memcpy(&child[i]->tree[j], &parent[i]->tree[j], sizeof(Voxel));
-////            }
-//            copy_vs(child[i], parent[i]);
-//        }
+        for (int i = 0; i < POP_SIZE; i++) {
+            INIT_VOXEL_SPACE(temp);
+            child[i] = temp;
+            child[i]->num_voxels = parent[i]->num_voxels;
+            child[i]->fitness = parent[i]->fitness;
+//            for (int j = 0; j < max_voxels; j++) {
+//                memcpy(&child[i]->tree[j], &parent[i]->tree[j], sizeof(Voxel));
+//            }
+            copy_vs(child[i], parent[i]);
+        }
 
         // generate random order for crossover
         int order[POP_SIZE];
         randomize_array(order);
         // crossover
         for (int i = 0; i < POP_SIZE; i+=2) {
-//            crossover(child[order[i]], child[order[i+1]]);
+            crossover(child[order[i]], child[order[i+1]]);
         }
 
         // mutation
         for (int i = 0; i < POP_SIZE; i++) {
-//            mutation(child[i]);
+            mutation(child[i]);
         }
 
         // calculate fitness
         for (int i = 0; i < POP_SIZE; i++) {
             simulate_population_cpu(parent, POP_SIZE, DEFAULT_START_HEIGHT);
-//            simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
+            simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
         }
 
         // print fitnesses of population
         for (int i = 0; i < POP_SIZE; i++) {
             std::cout << 0 << ": " << parent[i]->fitness << "\n";
         }
-        return;
 
         // initialize all population as copy of parent + child population
         Voxel_space* all[POP_SIZE * 2];
