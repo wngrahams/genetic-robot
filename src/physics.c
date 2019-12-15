@@ -25,8 +25,8 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
         springs[i] = NULL;
     }
 
-    printf("max_num_masses: %d\n", max_num_masses);
-    printf("max_num_springs: %d\n", max_num_springs);
+//    printf("max_num_masses: %d\n", max_num_masses);
+//    printf("max_num_springs: %d\n", max_num_springs);
 
     int masses_per_dim = (VOX_SPACE_MAX_DEPTH+1)*2;
 
@@ -39,8 +39,8 @@ void init_masses_and_springs_from_voxel_space(Mass** masses,
 
 
     init_springs(springs, masses, spring_count, max_num_masses, masses_per_dim);
-    printf("mass count: %d\n", *mass_count);
-    printf("spring count: %d\n", *spring_count);
+//    printf("mass count: %d\n", *mass_count);
+//    printf("spring count: %d\n", *spring_count);
     assert(*spring_count <= max_num_springs);
 
 }

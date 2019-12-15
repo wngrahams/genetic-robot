@@ -4,8 +4,8 @@
 #include "voxels.h"
 
 // GA macros
-#define POP_SIZE 4 // should be even
-#define NUM_OF_EVALS 16 // ideally a multiple of POP_SIZE
+#define POP_SIZE 30 // should be even
+#define NUM_OF_EVALS 100 // ideally a multiple of POP_SIZE
 #define CHANCE_OF_MUT 0.3
 #define NUM_OF_MUT 1
 
@@ -31,5 +31,6 @@ void crossover_exists(Voxel_space *, Voxel_space *, int p);
 void mutation(Voxel_space *);
 void selection(Voxel_space **, Voxel_space **, Voxel_space **);
 void randomize_array(int *);
+void copy_vs(Voxel_space *, Voxel_space *);
 
 #endif //_GA_H
