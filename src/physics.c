@@ -3,6 +3,8 @@
  *
  */
 
+#include <time.h>
+
 #include "physics.h"
 
 void init_masses_and_springs_from_voxel_space(Mass** masses, 
@@ -527,8 +529,8 @@ void simulate_population_cpu(Voxel_space** population,
             float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+L0_SIDE;
             if (pop_masses[indiv_idx][mass_idx]->pos[2] > threshold) {
                 population[indiv_idx]->fitness -= 
-                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)
-                    * DT; 
+                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold);
+                    //* DT; 
             }
 
             }  // end mass exists check
@@ -599,5 +601,249 @@ void calculate_center_of_mass(Mass** indiv_masses,
     *(com+0) = pos_x / total_mass;
     *(com+1) = pos_y / total_mass;
     *(com+2) = pos_z / total_mass;
+}
+
+void export_to_gl(Voxel_space* vs, const float start_height) {
+
+    int max_masses_per_indiv = get_total_possible_masses(VOX_SPACE_MAX_DEPTH);
+    int max_springs_per_indiv = get_total_possible_springs(VOX_SPACE_MAX_DEPTH);
+
+    Mass** indiv_masses = malloc(sizeof(Mass*) * max_masses_per_indiv);
+    CHECK_MALLOC_ERR(indiv_masses);
+
+    Spring** indiv_springs = malloc(sizeof(Spring*) * max_springs_per_indiv);
+    CHECK_MALLOC_ERR(indiv_springs);
+
+    int mass_count = 0;
+    int spring_count = 0;
+
+    init_masses_and_springs_from_voxel_space(indiv_masses,
+                                             max_masses_per_indiv,
+                                             indiv_springs,
+                                             max_springs_per_indiv,
+                                             &mass_count,
+                                             &spring_count,
+                                             vs,
+                                             start_height);
+
+    write_obj(vs, indiv_masses, max_masses_per_indiv, OBJ_FILE);
+
+    free(indiv_masses);
+    free(indiv_springs);
+}
+
+void write_obj(Voxel_space* vs,
+               Mass** masses, 
+               const int max_num_masses, 
+               char* filename) {
+
+    FILE *f_obj = fopen(filename, "w");
+    if (NULL == f_obj) {
+        perror("could not open obj file for writing");
+        exit(2);
+    }
+
+    fprintf(f_obj, "g voxel_space\n");
+
+    for (int i=0; i<max_num_masses; i++) {
+        if (NULL != masses[i]) {
+            fprintf(f_obj, "v %f %f %f\n",
+                     masses[i]->pos[0],
+                     masses[i]->pos[1],
+                     masses[i]->pos[2]);
+        }
+        else {
+            // also print a dummy value for the unused masses so that we can
+            // use the same indexing later
+            fprintf(f_obj, "v 100.0 100.0 100.0\n");
+        }
+    }
+
+    // vertex textures (can be used for colors)
+    fprintf(f_obj, "vt 1.0 0.0 0.0\n");
+    fprintf(f_obj, "vt 0.0 1.0 0.0\n");
+    fprintf(f_obj, "vt 0.0 0.0 1.0\n");
+    fprintf(f_obj, "vt 1.0 1.0 0.0\n");
+
+    // vertex normals
+    fprintf(f_obj, "vn 0.0 0.0 1.0\n");
+    fprintf(f_obj, "vn 0.0 1.0 0.0\n");
+    fprintf(f_obj, "vn 0.0 0.0 -1.0\n");
+    fprintf(f_obj, "vn 0.0 -1.0 0.0\n");
+    fprintf(f_obj, "vn 1.0 0.0 0.0\n");
+    fprintf(f_obj, "vn -1.0 0.0 0.0\n");
+
+    int masses_per_dim = (VOX_SPACE_MAX_DEPTH+1)*2;
+
+    int current_voxel_masses[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+    int total_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+    for (int i=0; i<total_voxels; i++) {
+        if (1 == vs->tree[i].exists) {
+            
+            int idx = 0;
+            for (int x=0; x<2; x++) {
+            for (int y=0; y<2; y++) {
+            for (int z=0; z<2; z++) {
+
+                int mass_idx = vs->tree[i].pos[0]+POS_OFFSET+x
+                               + masses_per_dim*(vs->tree[i].pos[1]+POS_OFFSET+y)
+                               + ipow(masses_per_dim, 2)
+                                   *(vs->tree[i].pos[2]+POS_OFFSET+z);
+
+                // plus 1 because obj files are 1-indexed
+                current_voxel_masses[idx] = mass_idx+1;
+                idx++;
+            }
+            }
+            }
+
+            int mat_color = vs->tree[i].material + 1;  // plus 1 bc obj 1-index
+
+            // left side:
+            fprintf(f_obj, "f %d/%d/6 ", 
+                    current_voxel_masses[0],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/6 ",
+                    current_voxel_masses[1],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/6\n",
+                    current_voxel_masses[2],
+                    mat_color);
+            fprintf(f_obj, "f %d/%d/6 ", 
+                    current_voxel_masses[2],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/6 ",
+                    current_voxel_masses[1],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/6\n",
+                    current_voxel_masses[3],
+                    mat_color);
+
+            // front side:
+            fprintf(f_obj, "f %d/%d/4 ", 
+                    current_voxel_masses[0],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/4 ",
+                    current_voxel_masses[5],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/4\n",
+                    current_voxel_masses[1],
+                    mat_color);
+            fprintf(f_obj, "f %d/%d/4 ", 
+                    current_voxel_masses[0],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/4 ",
+                    current_voxel_masses[4],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/4\n",
+                    current_voxel_masses[5],
+                    mat_color);
+
+            // right side:
+            fprintf(f_obj, "f %d/%d/5 ", 
+                    current_voxel_masses[4],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/5 ",
+                    current_voxel_masses[7],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/5\n",
+                    current_voxel_masses[5],
+                    mat_color);
+            fprintf(f_obj, "f %d/%d/5 ", 
+                    current_voxel_masses[4],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/5 ",
+                    current_voxel_masses[6],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/5\n",
+                    current_voxel_masses[7],
+                    mat_color);
+
+            // bottom side:
+            fprintf(f_obj, "f %d/%d/3 ", 
+                    current_voxel_masses[0],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/3 ",
+                    current_voxel_masses[2],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/3\n",
+                    current_voxel_masses[6],
+                    mat_color);
+            fprintf(f_obj, "f %d/%d/3 ", 
+                    current_voxel_masses[0],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/3 ",
+                    current_voxel_masses[6],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/3\n",
+                    current_voxel_masses[4],
+                    mat_color);
+
+            // back side:
+            fprintf(f_obj, "f %d/%d/2 ", 
+                    current_voxel_masses[6],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/2 ",
+                    current_voxel_masses[3],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/2\n",
+                    current_voxel_masses[7],
+                    mat_color);
+            fprintf(f_obj, "f %d/%d/2 ", 
+                    current_voxel_masses[6],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/2 ",
+                    current_voxel_masses[2],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/2\n",
+                    current_voxel_masses[3],
+                    mat_color);
+
+            // top side:
+            fprintf(f_obj, "f %d/%d/1 ", 
+                    current_voxel_masses[3],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/1 ",
+                    current_voxel_masses[5],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/1\n",
+                    current_voxel_masses[7],
+                    mat_color);
+            fprintf(f_obj, "f %d/%d/1 ", 
+                    current_voxel_masses[3],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/1 ",
+                    current_voxel_masses[1],
+                    mat_color);
+            fprintf(f_obj, "%d/%d/1\n",
+                    current_voxel_masses[5],
+                    mat_color);
+        }
+    }
+
+    // close file
+    fprintf(f_obj, "\n");
+    fclose(f_obj);
+}
+
+void simulate_gl(Voxel_space* vs, const float start_height) {
+
+    char text[32];
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    strftime(text, sizeof(text), "%d-%H:%M", t);
+
+    char walkfilename[64];
+    strcpy(walkfilename, "vs-walk-");
+    strcat(walkfilename, text);
+    strcat(walkfilename, ".txt");
+
+    char bouncefilename[64];
+    strcpy(bouncefilename, "vs-bounce-");
+    strcat(bouncefilename, text);
+    strcat(bouncefilename, ".txt");
+
+
+
 }
 
