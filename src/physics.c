@@ -528,11 +528,10 @@ void simulate_population_cpu(Voxel_space** population,
             }
 
             // apply height penalty to fitness:
-            float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)/L0_SIDE)+L0_SIDE;
+            float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+L0_SIDE;
             if (pop_masses[indiv_idx][mass_idx]->pos[2] > threshold) {
                 population[indiv_idx]->fitness -= 
-                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)
-                    / DT; 
+                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)*DT; 
             }
 
             }  // end mass exists check
