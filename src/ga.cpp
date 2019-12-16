@@ -21,7 +21,9 @@ int main(int argc, char** argv) {
 //    }
 //    delete_voxel_space(indiv);
 
-    ga_loop(0);
+//    ga_loop(0);
+    random_loop(0);
+//    hc_loop(0);
 }
 
 /*
@@ -118,7 +120,6 @@ void ga_loop(int thread_num) {
 
         // calculate fitness
         for (int i = 0; i < POP_SIZE; i++) {
-            simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
             simulate_population_cpu(child, POP_SIZE, START_HEIGHT);
         }
 
@@ -598,37 +599,41 @@ void random_loop(int thread_num) {
         initialize_random_robot(parent[i]);
     }
 
+    // calculate fitness
+    for (int i = 0; i < POP_SIZE; i++) {
+        simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
+    }
+
     // genetic algorithm loop
     for (int eval = 0; eval < NUM_OF_EVALS; eval+=POP_SIZE) {
+
+        // create other parent population
+        Voxel_space* other[POP_SIZE];
+        for (int i = 0; i < POP_SIZE; i++) {
+            INIT_VOXEL_SPACE(temp);
+            other[i] = temp;
+        }
+
+        // randomize other population
+        initialize_random_robot(other[0]);
 
         // calculate fitness
         for (int i = 0; i < POP_SIZE; i++) {
             simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
+            simulate_population_cpu(other, POP_SIZE, START_HEIGHT);
         }
 
         // print fitnesses of population
-        for (int i = 0; i < POP_SIZE; i++) {
-            std::cout << 0 << ": " << parent[i]->fitness << "\n";
-        }
+        std::cout << 0 << ": " << parent[0]->fitness << "\n";
 
-        // find most fit individual
-        int max_fit_index = 0;
-        for (int i = 0; i < POP_SIZE; i++) {
-            if (parent[i]->fitness > parent[max_fit_index]->fitness) {
-                max_fit_index = i;
-            }
+        // test
+        if (parent[0]->fitness < other[0]->fitness) {
+            copy_vs(parent[0], other[0]);
         }
 
         // write learning curve to file
-        for (int i = 0; i < POP_SIZE * 2; i++) {
-            learning_file << parent[max_fit_index]->fitness << ",";
-        }
-        // write to dot plot file
-        for (int i = 0; i < POP_SIZE; i++) {
-            dot_file << eval << "," << parent[i]->fitness << "\n";
-        }
-        // calculate and write to diversity file
-        diversity_file << calculate_diversity(parent) << ",";
+        learning_file << parent[0]->fitness << ",";
+        learning_file << parent[0]->fitness << ",";
 
         // print fitnesses of population
         if (eval % POP_SIZE == 0) {
@@ -644,24 +649,108 @@ void random_loop(int thread_num) {
     double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
     std::cout << "iter/sec: " << iters_per_sec << "\n";
 
-    // find most fit individual
-    int max_fit_index = 0;
-    for (int i = 0; i < POP_SIZE; i++) {
-        if (parent[i]->fitness > parent[max_fit_index]->fitness) {
-            max_fit_index = i;
-        }
-    }
     std::cout << "most fit individual:\n";
-    std::cout << "\tfitness: " << parent[max_fit_index]->fitness << std::endl;
+    std::cout << "\tfitness: " << parent[0]->fitness << std::endl;
     std::cout << "\tdist traveled: ";
-    std::cout << parent[max_fit_index]->simulated_dist << std::endl;
+    std::cout << parent[0]->simulated_dist << std::endl;
 
-    export_to_gl(parent[max_fit_index], START_HEIGHT);
+    export_to_gl(parent[0], START_HEIGHT);
 
     // clean up parent generation
-    for (int i=0; i<POP_SIZE; i++) {
-        delete_voxel_space(parent[i]);
+    delete_voxel_space(parent[0]);
+
+    // close file
+    learning_file.close();
+}
+
+void hc_loop(int thread_num) {
+
+    // begin timer
+    clock_t begin = clock();
+
+    // initialize files
+    std::ofstream learning_file;
+    learning_file.open(std::to_string(thread_num) + LEARNING_TXT);
+    std::ofstream dot_file;
+    dot_file.open(std::to_string(thread_num) + DOT_TXT);
+    std::ofstream diversity_file;
+    diversity_file.open(std::to_string(thread_num) + DIVERSITY_TXT);
+
+    // declare variables
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+
+    // create initial parent population
+    Voxel_space* parent[POP_SIZE];
+    for (int i = 0; i < POP_SIZE; i++) {
+        INIT_VOXEL_SPACE(temp);
+        parent[i] = temp;
     }
+    // randomize initial population
+    for (int i = 0; i < POP_SIZE; i++) {
+        //printf("%d: %d\n", i, parent[0].tree[i].type);
+        initialize_random_robot(parent[i]);
+    }
+    // calculate fitness
+    for (int i = 0; i < POP_SIZE; i++) {
+        simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
+    }
+
+    // hc loop
+    for (int eval = 0; eval < NUM_OF_EVALS; eval+=POP_SIZE) {
+
+        // create other parent population
+        Voxel_space* other[POP_SIZE];
+        for (int i = 0; i < POP_SIZE; i++) {
+            INIT_VOXEL_SPACE(temp);
+            other[i] = temp;
+        }
+
+        // randomize other population
+        copy_vs(other[0], parent[0]);
+
+        // mutation
+        mutation(other[0]);
+
+        // calculate fitness
+        for (int i = 0; i < POP_SIZE; i++) {
+            simulate_population_cpu(other, POP_SIZE, START_HEIGHT);
+        }
+
+        // print fitnesses of population
+        std::cout << 0 << ": " << parent[0]->fitness << "\n";
+
+        // test
+        if (parent[0]->fitness < other[0]->fitness) {
+            copy_vs(parent[0], other[0]);
+        }
+
+        // write learning curve to file
+        learning_file << parent[0]->fitness << ",";
+        learning_file << parent[0]->fitness << ",";
+
+        // print fitnesses of population
+        if (eval % POP_SIZE == 0) {
+            for (int i = 0; i < POP_SIZE; i++) {
+                std::cout << eval << ": " << parent[i]->fitness << "\n";
+            }
+        }
+    }
+
+    // end timer
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
+    std::cout << "iter/sec: " << iters_per_sec << "\n";
+
+    std::cout << "most fit individual:\n";
+    std::cout << "\tfitness: " << parent[0]->fitness << std::endl;
+    std::cout << "\tdist traveled: ";
+    std::cout << parent[0]->simulated_dist << std::endl;
+
+    export_to_gl(parent[0], START_HEIGHT);
+
+    // clean up parent generation
+    delete_voxel_space(parent[0]);
 
     // close file
     learning_file.close();
