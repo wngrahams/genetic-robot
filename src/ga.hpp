@@ -4,14 +4,14 @@
 #include "voxels.h"
 
 // GA macros
-#define POP_SIZE 20 // should be even
-#define NUM_OF_EVALS  40 // ideally a multiple of POP_SIZE
+#define POP_SIZE 50 // should be even
+#define NUM_OF_EVALS  500 // ideally a multiple of POP_SIZE
 #define CHANCE_OF_MUT 0.3
 #define NUM_OF_MUT 1
 
 // robot macros
-#define NUM_OF_CENTERS 4
-#define NUM_OF_HOLES 4
+#define NUM_OF_CENTERS 5
+#define NUM_OF_HOLES 10
 
 #define NUM_OF_MATERIALS 4
 #define NUM_OF_M_CHILD 1

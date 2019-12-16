@@ -240,7 +240,7 @@ void initialize_random_robot(Voxel_space *individual) {
         // pick random index and a material
         int center = mat_cent(mt);
 //        printf("center chosen: %d\n", center);
-        material_t mat = static_cast<material_t>(i);
+        material_t mat = static_cast<material_t>(mat_init(mt));
 //        printf("material chosen: %d\n", mat);
 
         // update tree accordingly

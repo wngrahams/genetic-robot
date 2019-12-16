@@ -343,7 +343,7 @@ void simulate_population_cpu(Voxel_space** population,
     float* centers_of_mass_f = (float*)malloc(sizeof(float)*pop_size*3);
     CHECK_MALLOC_ERR(centers_of_mass_f);
 
-    float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+L0_SIDE;
+    float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+(2*L0_SIDE);
 
     // get initial centers of mass:
     for (int i=0; i<pop_size; i++) {
