@@ -302,6 +302,10 @@ void simulate_population_cpu(Voxel_space** population,
     CHECK_MALLOC_ERR(pop_spring_counts);
 
     for (int i=0; i<pop_size; i++) {
+
+        // init fitness to 0
+        population[i]->fitness = 0.0f;
+
         Mass** indiv_masses = malloc(sizeof(Mass*) * max_masses_per_indiv);
         CHECK_MALLOC_ERR(indiv_masses);
         pop_masses[i] = indiv_masses;
@@ -338,10 +342,12 @@ void simulate_population_cpu(Voxel_space** population,
                                  max_masses_per_indiv, 
                                  &(centers_of_mass_i[3*i]));
     }
+
+    float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+(L0_SIDE/2);
     
     // this sucks but so do I
     int masses_per_indiv = max_masses_per_indiv;
-   
+
     float t = 0.0f;
     for (int sim_i=0; sim_i<NUM_OF_ITERATIONS; sim_i++) {
 
@@ -516,7 +522,9 @@ void simulate_population_cpu(Voxel_space** population,
 
                 // velocity:
                 pop_masses[indiv_idx][mass_idx]->vel[j] +=
-                    pop_masses[indiv_idx][mass_idx]->acc[j] * DT * V_DAMP_CONST;
+                    pop_masses[indiv_idx][mass_idx]->acc[j] * DT;
+
+                pop_masses[indiv_idx][mass_idx]->vel[j] *= V_DAMP_CONST;
 
                 // position:
                 pop_masses[indiv_idx][mass_idx]->pos[j] +=
@@ -524,11 +532,10 @@ void simulate_population_cpu(Voxel_space** population,
             }
 
             // apply height penalty to fitness:
-            float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+L0_SIDE;
             if (pop_masses[indiv_idx][mass_idx]->pos[2] > threshold) {
                 population[indiv_idx]->fitness -= 
-                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)
-                    * DT; 
+                    (pop_masses[indiv_idx][mass_idx]->pos[2]);// - threshold)
+                    //* DT;
             }
 
             }  // end mass exists check

@@ -169,7 +169,7 @@ void ga_loop(int thread_num) {
         }
 
         // write learning curve to file
-        for (int i = 0; i < POP_SIZE; i++) {
+        for (int i = 0; i < POP_SIZE * 2; i++) {
             learning_file << parent[max_fit_index]->fitness << ",";
         }
         // write to dot plot file
