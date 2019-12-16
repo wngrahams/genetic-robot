@@ -118,8 +118,8 @@ void ga_loop(int thread_num) {
 
         // calculate fitness
         for (int i = 0; i < POP_SIZE; i++) {
-            simulate_population_cpu(parent, POP_SIZE, DEFAULT_START_HEIGHT);
-            simulate_population_cpu(child, POP_SIZE, DEFAULT_START_HEIGHT);
+            simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
+            simulate_population_cpu(child, POP_SIZE, START_HEIGHT);
         }
 
         // print fitnesses of population
@@ -186,12 +186,26 @@ void ga_loop(int thread_num) {
             }
         }
     }
-
+    
     // end timer
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
     std::cout << "iter/sec: " << iters_per_sec << "\n";
+
+    // find most fit individual
+    int max_fit_index = 0;
+    for (int i = 0; i < POP_SIZE; i++) {
+        if (parent[i]->fitness > parent[max_fit_index]->fitness) {
+            max_fit_index = i;
+        }
+    }
+    std::cout << "most fit individual:\n";
+    std::cout << "\tfitness: " << parent[max_fit_index]->fitness << std::endl;
+    std::cout << "\tdist traveled: ";
+    std::cout << parent[max_fit_index]->simulated_dist << std::endl;
+
+    export_to_gl(parent[max_fit_index], START_HEIGHT);
 
     // clean up parent generation
     for (int i=0; i<POP_SIZE; i++) {
@@ -211,19 +225,21 @@ void initialize_random_robot(Voxel_space *individual) {
     // random variable generation
     std::random_device rd;
     std::mt19937 mt(rd());
+    std::uniform_int_distribution<> mat_init(0, NUM_MATERIALS-1);
     std::uniform_int_distribution<> mat_cent(0, max_voxels - 1);
     std::uniform_int_distribution<> exi_cent(1, max_voxels - 1);
 
+    material_t start_mat = static_cast<material_t>(mat_init(mt));
     for (int i = 0; i < max_voxels; i++) {
         individual->tree[i].exists = 1;
-        individual->tree[i].material = BONE;
+        individual->tree[i].material = start_mat;
     }
 
     for (int i = 0; i < NUM_OF_CENTERS; i++) {
         // pick random index and a material
         int center = mat_cent(mt);
 //        printf("center chosen: %d\n", center);
-        material_t mat = static_cast<material_t>(i);
+        material_t mat = static_cast<material_t>(mat_init(mt));
 //        printf("material chosen: %d\n", mat);
 
         // update tree accordingly
@@ -475,7 +491,8 @@ void copy_vs(Voxel_space *child, Voxel_space *parent) {
 double calculate_diversity(Voxel_space **parent) {
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
     int avg_pos = 0;
-    double mse = 0;
+    double mse = 0.0;
+
     for (int i = 0; i < POP_SIZE; i++) {
         for (int j = 0; j < max_voxels; j++) {
             if (!parent[i]->tree[j].exists) {

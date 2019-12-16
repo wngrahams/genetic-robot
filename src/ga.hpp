@@ -4,14 +4,15 @@
 #include "voxels.h"
 
 // GA macros
+
 #define POP_SIZE 40 // should be even
 #define NUM_OF_EVALS 1000 // ideally a multiple of POP_SIZE
 #define CHANCE_OF_MUT 0.3
 #define NUM_OF_MUT 1
 
 // robot macros
-#define NUM_OF_CENTERS 4
-#define NUM_OF_HOLES 2
+#define NUM_OF_CENTERS 5
+#define NUM_OF_HOLES 10
 
 #define NUM_OF_MATERIALS 4
 #define NUM_OF_M_CHILD 1
@@ -22,6 +23,8 @@
 #define LEARNING_TXT "learningcurve_ga.txt" // for learning curve
 #define DOT_TXT "dotplot_ga.txt"
 #define DIVERSITY_TXT "diversity_ga.txt"
+
+#define START_HEIGHT DEFAULT_START_HEIGHT
 
 void ga_loop(int);
 void initialize_random_robot(Voxel_space *);
@@ -37,3 +40,4 @@ void copy_vs(Voxel_space *, Voxel_space *);
 double calculate_diversity(Voxel_space **);
 
 #endif //_GA_H
+

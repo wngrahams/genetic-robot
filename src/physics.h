@@ -15,6 +15,8 @@
 extern "C" {
 #endif
 
+#define OBJ_FILE "vs.obj"
+
 #define MAX_MASSES_PER_VOXEL 8
 #define MAX_SPRINGS_PER_VOXEL 28
 
@@ -110,6 +112,10 @@ static float inline dist3d(const float x2, const float x1,
 }
 
 void calculate_center_of_mass(Mass**, const int, float*);
+
+void export_to_gl(Voxel_space*, const float);
+void write_obj(Voxel_space*, Mass**, const int, const char*);
+void simulate_gl(Voxel_space*, const float, char*);
 
 #ifdef __cplusplus
 }
