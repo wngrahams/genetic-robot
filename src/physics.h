@@ -41,9 +41,9 @@ extern "C" {
 
 #define DEFAULT_START_HEIGHT (L0_SIDE/100.0f)
 
-#define K_HARD   10000.0f
-#define K_SOFT   500.0f
-#define K_MUSCLE 2000.0f
+#define K_HARD   20000.0f
+#define K_SOFT   1000.0f
+#define K_MUSCLE 5000.0f
 
 // These values must be multiplied by L0 before assigning to the b parameter!!!
 #define B_STATIC 0.0f
@@ -51,7 +51,7 @@ extern "C" {
 
 static const float material_to_k_map[4]={ K_HARD,   K_SOFT,   K_MUSCLE, K_MUSCLE };
 static const float material_to_b_map[4]={ B_STATIC, B_STATIC, B_MUSCLE, B_MUSCLE };
-static const float material_to_c_map[4]={ 0.0f,     0.0f,     0.0f,     (F_PI)};
+static const float material_to_c_map[4]={ 0.0f,     0.0f,     0.0f,     F_PI     };
 
 static const float length_map[4]={ 0.0f, L0_SIDE, L0_FACE, L0_MIDDLE };
 
