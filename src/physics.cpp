@@ -658,6 +658,17 @@ void export_to_gl(Voxel_space* vs, const float start_height) {
     //simulate_gl(vs, DEFAULT_START_HEIGHT, walkfilename);
     //simulate_gl(vs, 1.0, bouncefilename);
 
+    for (int i=0; i<max_masses_per_indiv; i++) {
+        if (NULL != indiv_masses[i]) {
+            free(indiv_masses[i]);
+        }
+    }
+    for (int i=0; i<max_springs_per_indiv; i++) {
+        if (NULL != indiv_springs[i]) {
+            free(indiv_springs[i]);
+        }
+    }
+
     free(indiv_masses);
     free(indiv_springs);
 }
