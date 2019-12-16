@@ -342,12 +342,15 @@ void crossover(Voxel_space *A, Voxel_space *B) {
     // get random spot for crossover (not root / center)
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
     int p = rand() % (max_voxels - 1) + 1;
+    int m = rand() % (max_voxels - 1) + 1;
     while (!A->tree[p].exists || !B->tree[p].exists) {
         p = rand() % (max_voxels - 1) + 1;
+        m = rand() % (max_voxels - 1) + 1;
     }
 
     // switch morphology at point and all its children
     crossover_exists(A, B, p);
+    crossover_mats(A, B, m);
 }
 
 /*
@@ -390,6 +393,45 @@ void crossover_exists(Voxel_space *A, Voxel_space *B, int idx) {
 }
 
 /*
+ * recursively descend through two trees and switch exists at each idx
+ */
+void crossover_mats(Voxel_space *A, Voxel_space *B, int idx) {
+    // return if past bounds
+    if (idx >= total_voxels_at_depth(VOX_SPACE_MAX_DEPTH)) {
+        return;
+    }
+
+    // for convenience
+    voxel_type current_type = A->tree[idx].type;
+    // switch morphology
+    material_t temp = A->tree[idx].material;
+    A->tree[idx].material = B->tree[idx].material;
+    B->tree[idx].material = temp;
+
+    // recursive descent through children
+    if (ROOT == current_type) {
+        for (int i=1; i<27; i++) {
+            crossover_mats(A, B, i);
+        }
+    } else if (MIDDLE == current_type) {
+        crossover_mats(A, B, get_child_index_of_m(idx));
+    } else if (EDGE == current_type) {
+        for (int i=0; i<2; i++) {
+            crossover_mats(A, B, get_child_index_of_e(idx, MIDDLE, i));
+        }
+        crossover_mats(A, B, get_child_index_of_e(idx, EDGE, 0));
+    } else if (CORNER == current_type) {
+        for (int i=0; i<3; i++) {
+            crossover_mats(A, B, get_child_index_of_c(idx, MIDDLE, i));
+        }
+        for (int i=0; i<3; i++) {
+            crossover_mats(A, B, get_child_index_of_c(idx, EDGE, i));
+        }
+        crossover_mats(A, B, get_child_index_of_c(idx, CORNER, 0));
+    }
+}
+
+/*
  * mutation
  */
 void mutation(Voxel_space *A) {
@@ -405,6 +447,19 @@ void mutation(Voxel_space *A) {
             // pick random exists or not and update robot
             int exists = rand() % 1;
             update_exists(A, p, exists);
+        }
+    }
+    for (int i = 0; i < NUM_OF_MUT; i++) {
+        double mut = (rand()/(double)RAND_MAX);
+        if (CHANCE_OF_MUT < mut) {
+            // pick random spot for mutation
+            int p = rand() % (max_voxels - 1) + 1;
+            while (!A->tree[p].exists) {
+                p = rand() % (max_voxels - 1) + 1;
+            }
+            // pick random exists or not and update robot
+            material_t mat = (material_t) (rand() % NUM_OF_MATERIALS);
+            update_mats(A, p, mat);
         }
     }
 }
@@ -512,4 +567,102 @@ double calculate_diversity(Voxel_space **parent) {
     }
     mse /= POP_SIZE;
     return mse;
+}
+
+void random_loop(int thread_num) {
+
+    // begin timer
+    clock_t begin = clock();
+
+    // initialize files
+    std::ofstream learning_file;
+    learning_file.open(std::to_string(thread_num) + LEARNING_TXT);
+    std::ofstream dot_file;
+    dot_file.open(std::to_string(thread_num) + DOT_TXT);
+    std::ofstream diversity_file;
+    diversity_file.open(std::to_string(thread_num) + DIVERSITY_TXT);
+
+    // declare variables
+    int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
+
+    // create initial parent population
+    Voxel_space* parent[POP_SIZE];
+    for (int i = 0; i < POP_SIZE; i++) {
+        INIT_VOXEL_SPACE(temp);
+        parent[i] = temp;
+    }
+
+    // randomize initial population
+    for (int i = 0; i < POP_SIZE; i++) {
+        //printf("%d: %d\n", i, parent[0].tree[i].type);
+        initialize_random_robot(parent[i]);
+    }
+
+    // genetic algorithm loop
+    for (int eval = 0; eval < NUM_OF_EVALS; eval+=POP_SIZE) {
+
+        // calculate fitness
+        for (int i = 0; i < POP_SIZE; i++) {
+            simulate_population_cpu(parent, POP_SIZE, START_HEIGHT);
+        }
+
+        // print fitnesses of population
+        for (int i = 0; i < POP_SIZE; i++) {
+            std::cout << 0 << ": " << parent[i]->fitness << "\n";
+        }
+
+        // find most fit individual
+        int max_fit_index = 0;
+        for (int i = 0; i < POP_SIZE; i++) {
+            if (parent[i]->fitness > parent[max_fit_index]->fitness) {
+                max_fit_index = i;
+            }
+        }
+
+        // write learning curve to file
+        for (int i = 0; i < POP_SIZE * 2; i++) {
+            learning_file << parent[max_fit_index]->fitness << ",";
+        }
+        // write to dot plot file
+        for (int i = 0; i < POP_SIZE; i++) {
+            dot_file << eval << "," << parent[i]->fitness << "\n";
+        }
+        // calculate and write to diversity file
+        diversity_file << calculate_diversity(parent) << ",";
+
+        // print fitnesses of population
+        if (eval % POP_SIZE == 0) {
+            for (int i = 0; i < POP_SIZE; i++) {
+                std::cout << eval << ": " << parent[i]->fitness << "\n";
+            }
+        }
+    }
+
+    // end timer
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
+    std::cout << "iter/sec: " << iters_per_sec << "\n";
+
+    // find most fit individual
+    int max_fit_index = 0;
+    for (int i = 0; i < POP_SIZE; i++) {
+        if (parent[i]->fitness > parent[max_fit_index]->fitness) {
+            max_fit_index = i;
+        }
+    }
+    std::cout << "most fit individual:\n";
+    std::cout << "\tfitness: " << parent[max_fit_index]->fitness << std::endl;
+    std::cout << "\tdist traveled: ";
+    std::cout << parent[max_fit_index]->simulated_dist << std::endl;
+
+    export_to_gl(parent[max_fit_index], START_HEIGHT);
+
+    // clean up parent generation
+    for (int i=0; i<POP_SIZE; i++) {
+        delete_voxel_space(parent[i]);
+    }
+
+    // close file
+    learning_file.close();
 }
