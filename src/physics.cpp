@@ -343,6 +343,7 @@ void simulate_population_cpu(Voxel_space** population,
     float* centers_of_mass_f = (float*)malloc(sizeof(float)*pop_size*3);
     CHECK_MALLOC_ERR(centers_of_mass_f);
 
+    float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+L0_SIDE;
 
     // get initial centers of mass:
     for (int i=0; i<pop_size; i++) {
@@ -538,11 +539,9 @@ void simulate_population_cpu(Voxel_space** population,
             }
 
             // apply height penalty to fitness:
-            float threshold = ((2 * VOX_SPACE_MAX_DEPTH + 1)*L0_SIDE)+L0_SIDE;
             if (pop_masses[indiv_idx][mass_idx]->pos[2] > threshold) {
                 population[indiv_idx]->fitness -= 
-                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold);
-                    //* DT; 
+                    (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)* DT; 
             }
 
             }  // end mass exists check
@@ -1083,23 +1082,19 @@ void simulate_gl(Voxel_space* vs, const float start_height, char* outfile) {
             write_obj(vs, 
                       pop_masses[0], 
                       max_masses_per_indiv,
-                      "temp.txt");
+                      "temp.obj");
             float* vp = NULL;
             float* vt = NULL;
             float* vn = NULL;
             int point_count = 0;
-            load_obj_file("temp.txt", vp, vt, vn, point_count); 
+            load_obj_file("temp.obj", vp, vt, vn, point_count); 
             for (int p=0; p<point_count*3; p+=3) {
                 fprintf(f_out, "%f,", vp[p]);
                 fprintf(f_out, "%f,", vp[p+1]);
-                fprintf(f_out, "%f", vp[p+2]);
-
-                if (p != point_count*3 - 3) {
-                    fprintf(f_out, ",");
-                }
+                fprintf(f_out, "%f,\n", vp[p+2]);
 
             }
-            fprintf(f_out, "\n");
+            fprintf(f_out, "END ITERATION\n");
 
             free(vp);
             free(vt); 
