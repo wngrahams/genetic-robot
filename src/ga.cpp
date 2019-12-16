@@ -169,7 +169,7 @@ void ga_loop(int thread_num) {
         }
 
         // write learning curve to file
-        for (int i = 0; i < POP_SIZE; i++) {
+        for (int i = 0; i < POP_SIZE * 2; i++) {
             learning_file << parent[max_fit_index]->fitness << ",";
         }
         // write to dot plot file
@@ -186,6 +186,12 @@ void ga_loop(int thread_num) {
             }
         }
     }
+    
+    // end timer
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
+    std::cout << "iter/sec: " << iters_per_sec << "\n";
 
     // find most fit individual
     int max_fit_index = 0;
@@ -200,13 +206,6 @@ void ga_loop(int thread_num) {
     std::cout << parent[max_fit_index]->simulated_dist << std::endl;
 
     export_to_gl(parent[max_fit_index], START_HEIGHT);
-
-
-    // end timer
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    double iters_per_sec = NUM_OF_ITERATIONS / elapsed_secs;
-    std::cout << "iter/sec: " << iters_per_sec << "\n";
 
     // clean up parent generation
     for (int i=0; i<POP_SIZE; i++) {
@@ -493,6 +492,7 @@ double calculate_diversity(Voxel_space **parent) {
     int max_voxels = total_voxels_at_depth(VOX_SPACE_MAX_DEPTH);
     int avg_pos = 0;
     double mse = 0.0;
+
     for (int i = 0; i < POP_SIZE; i++) {
         for (int j = 0; j < max_voxels; j++) {
             if (!parent[i]->tree[j].exists) {

@@ -314,7 +314,7 @@ void simulate_population_cpu(Voxel_space** population,
         // init fitness to 0
         population[i]->fitness = 0.0f;
 
-        Mass** indiv_masses = (Mass**)malloc(sizeof(Mass*) * max_masses_per_indiv);
+        Mass** indiv_masses = (Mass**)malloc(sizeof(Mass*)*max_masses_per_indiv);
         CHECK_MALLOC_ERR(indiv_masses);
         pop_masses[i] = indiv_masses;
 
@@ -351,10 +351,10 @@ void simulate_population_cpu(Voxel_space** population,
                                  max_masses_per_indiv, 
                                  &(centers_of_mass_i[3*i]));
     }
-    
+
     // this sucks but so do I
     int masses_per_indiv = max_masses_per_indiv;
-   
+
     float t = 0.0f;
     for (int sim_i=0; sim_i<NUM_OF_ITERATIONS; sim_i++) {
 
@@ -542,6 +542,7 @@ void simulate_population_cpu(Voxel_space** population,
             if (pop_masses[indiv_idx][mass_idx]->pos[2] > threshold) {
                 population[indiv_idx]->fitness -= 
                     (pop_masses[indiv_idx][mass_idx]->pos[2] - threshold)* DT; 
+
             }
 
             }  // end mass exists check

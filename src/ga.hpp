@@ -4,8 +4,9 @@
 #include "voxels.h"
 
 // GA macros
-#define POP_SIZE 50 // should be even
-#define NUM_OF_EVALS  500 // ideally a multiple of POP_SIZE
+
+#define POP_SIZE 40 // should be even
+#define NUM_OF_EVALS 1000 // ideally a multiple of POP_SIZE
 #define CHANCE_OF_MUT 0.3
 #define NUM_OF_MUT 1
 
