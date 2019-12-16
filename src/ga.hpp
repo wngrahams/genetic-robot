@@ -5,14 +5,14 @@
 
 // GA macros
 
-#define POP_SIZE 40 // should be even
-#define NUM_OF_EVALS 1000 // ideally a multiple of POP_SIZE
+#define POP_SIZE 22 // should be even
+#define NUM_OF_EVALS 66 // ideally a multiple of POP_SIZE
 #define CHANCE_OF_MUT 0.3
 #define NUM_OF_MUT 1
 
 // robot macros
-#define NUM_OF_CENTERS 5
-#define NUM_OF_HOLES 10
+#define NUM_OF_CENTERS 9
+#define NUM_OF_HOLES 12
 
 #define NUM_OF_MATERIALS 4
 #define NUM_OF_M_CHILD 1

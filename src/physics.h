@@ -41,9 +41,9 @@ extern "C" {
 
 #define DEFAULT_START_HEIGHT (L0_SIDE/100.0f)
 
-#define K_HARD   10000.0f
-#define K_SOFT   500.0f
-#define K_MUSCLE 2000.0f
+#define K_HARD   20000.0f
+#define K_SOFT   1000.0f
+#define K_MUSCLE 5000.0f
 
 // These values must be multiplied by L0 before assigning to the b parameter!!!
 #define B_STATIC 0.0f
