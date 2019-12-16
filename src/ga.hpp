@@ -5,14 +5,14 @@
 
 // GA macros
 
-#define POP_SIZE 20 // should be even
-#define NUM_OF_EVALS 100 // ideally a multiple of POP_SIZE
-#define CHANCE_OF_MUT 0.3
-#define NUM_OF_MUT 1
+#define POP_SIZE 30 // should be even
+#define NUM_OF_EVALS 240 // ideally a multiple of POP_SIZE
+#define CHANCE_OF_MUT 0.5
+#define NUM_OF_MUT 2
 
 // robot macros
-#define NUM_OF_CENTERS 9
-#define NUM_OF_HOLES 12
+#define NUM_OF_CENTERS 5
+#define NUM_OF_HOLES 9
 
 #define NUM_OF_MATERIALS 4
 #define NUM_OF_M_CHILD 1
@@ -32,12 +32,15 @@ void update_mats(Voxel_space *, const int, material_t);
 void update_exists(Voxel_space* , const int, int);
 void voxel_space_copy(Voxel_space *, Voxel_space *);
 void crossover(Voxel_space *, Voxel_space *);
-void crossover_exists(Voxel_space *, Voxel_space *, int p);
+void crossover_exists(Voxel_space *, Voxel_space *, int);
+void crossover_mats(Voxel_space *, Voxel_space *, int);
 void mutation(Voxel_space *);
 void selection(Voxel_space **, Voxel_space **, Voxel_space **);
 void randomize_array(int *);
 void copy_vs(Voxel_space *, Voxel_space *);
 double calculate_diversity(Voxel_space **);
+void random_loop(int);
+void hc_loop(int);
 
 #endif //_GA_H
 
