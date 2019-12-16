@@ -11,7 +11,7 @@
 
 // robot macros
 #define NUM_OF_CENTERS 4
-#define NUM_OF_HOLES 3
+#define NUM_OF_HOLES 4
 
 #define NUM_OF_MATERIALS 4
 #define NUM_OF_M_CHILD 1

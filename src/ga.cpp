@@ -226,12 +226,14 @@ void initialize_random_robot(Voxel_space *individual) {
     // random variable generation
     std::random_device rd;
     std::mt19937 mt(rd());
+    std::uniform_int_distribution<> mat_init(0, NUM_MATERIALS-1);
     std::uniform_int_distribution<> mat_cent(0, max_voxels - 1);
     std::uniform_int_distribution<> exi_cent(1, max_voxels - 1);
 
+    material_t start_mat = static_cast<material_t>(mat_init(mt));
     for (int i = 0; i < max_voxels; i++) {
         individual->tree[i].exists = 1;
-        individual->tree[i].material = BONE;
+        individual->tree[i].material = start_mat;
     }
 
     for (int i = 0; i < NUM_OF_CENTERS; i++) {
