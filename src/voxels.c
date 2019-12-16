@@ -91,7 +91,7 @@ void init_3x3(Voxel* tree) {
     tree[0].pos[1] = 0; 
     tree[0].pos[2] = 0;
     tree[0].exists = 1;
-    tree[0].material = TISSUE;
+    tree[0].material = BONE;
 
     // 'middle' voxels change the pos in one dimension:
     start = NUM_R_3X3;
@@ -101,8 +101,8 @@ void init_3x3(Voxel* tree) {
         tree[i+start].pos[0] = m_positions[3*i+0];
         tree[i+start].pos[1] = m_positions[3*i+1];
         tree[i+start].pos[2] = m_positions[3*i+2];
-        tree[i+start].exists = 0;
-        tree[i+start].material = UNKNOWN;
+        tree[i+start].exists = 1;
+        tree[i+start].material = TISSUE;
     }
     
     // 'edge' voxels change the pos in two dimensions:
@@ -113,8 +113,8 @@ void init_3x3(Voxel* tree) {
         tree[i+start].pos[0] = e_positions[3*i+0];
         tree[i+start].pos[1] = e_positions[3*i+1];
         tree[i+start].pos[2] = e_positions[3*i+2];
-        tree[i+start].exists = 0;
-        tree[i+start].material = UNKNOWN;
+        tree[i+start].exists = 1;
+        tree[i+start].material = EXPAND;
     }
 
     // 'corner' voxels change the pos in three dimensions
@@ -125,8 +125,8 @@ void init_3x3(Voxel* tree) {
         tree[i+start].pos[0] = c_positions[3*i+0];
         tree[i+start].pos[1] = c_positions[3*i+1];
         tree[i+start].pos[2] = c_positions[3*i+2];
-        tree[i+start].exists = 0;
-        tree[i+start].material = UNKNOWN;
+        tree[i+start].exists = 1;
+        tree[i+start].material = CONTRACT;
     }
 
 }

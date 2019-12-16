@@ -3,14 +3,14 @@ CXX = g++
 
 INCLUDES =
 
-CFLAGS   = -O3 -g -Wall $(INCLUDES)
-CXXFLAGS = -O3 -g -Wall -std=c++11 $(INCLUDES)
+CFLAGS   = -O0 -g -Wall $(INCLUDES)
+CXXFLAGS = -O0 -g -Wall -std=c++11 $(INCLUDES)
 
 LDFLAGS = -g  
 LDLIBS  = -lm -lstdc++ 
 
 executables = driver
-objects = driver.o ga-utils.o voxels.o physics.o obj_parser.o
+objects = drive.o ga-utils.o voxels.o physics.o obj_parser.o
 
 .PHONY: default
 default: $(executables)

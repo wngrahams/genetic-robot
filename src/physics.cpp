@@ -94,6 +94,7 @@ void dfs_init_masses(Voxel_space* vs,
 						(*mass_count)++;
 
             			masses[mass_idx] = (Mass*)malloc(sizeof(Mass));
+                        CHECK_MALLOC_ERR(masses[mass_idx]);
             			masses[mass_idx]->m = MASS_M;
             			masses[mass_idx]->pos[0] = 
                             (vs->tree[idx].pos[0]+POS_OFFSET+x+0.0) * L0_SIDE;
@@ -654,8 +655,8 @@ void export_to_gl(Voxel_space* vs, const float start_height) {
     strcat(bouncefilename, text);
     strcat(bouncefilename, ".txt");
 
-    simulate_gl(vs, DEFAULT_START_HEIGHT, walkfilename);
-    simulate_gl(vs, 1.0, bouncefilename);
+    //simulate_gl(vs, DEFAULT_START_HEIGHT, walkfilename);
+    //simulate_gl(vs, 1.0, bouncefilename);
 
     free(indiv_masses);
     free(indiv_springs);
@@ -689,10 +690,10 @@ void write_obj(Voxel_space* vs,
     }
 
     // vertex textures (i'm using them for colors lmao)
-    fprintf(f_obj, "vt 1.0 0.0\n");
+    fprintf(f_obj, "vt 0.5 0.0\n");
+    fprintf(f_obj, "vt 1.0 1.0\n");
     fprintf(f_obj, "vt 1.0 0.5\n");
-    fprintf(f_obj, "vt 0.0 1.0\n");
-    fprintf(f_obj, "vt 0.5 1.0\n");
+    fprintf(f_obj, "vt 0.1 0.5\n");
 
     // vertex normals
     fprintf(f_obj, "vn 0.0 0.0 1.0\n");
