@@ -655,8 +655,8 @@ void export_to_gl(Voxel_space* vs, const float start_height) {
     strcat(bouncefilename, text);
     strcat(bouncefilename, ".txt");
 
-    //simulate_gl(vs, DEFAULT_START_HEIGHT, walkfilename);
-    //simulate_gl(vs, 1.0, bouncefilename);
+    simulate_gl(vs, DEFAULT_START_HEIGHT, walkfilename);
+    simulate_gl(vs, 1.0, bouncefilename);
 
     for (int i=0; i<max_masses_per_indiv; i++) {
         if (NULL != indiv_masses[i]) {
@@ -1100,6 +1100,10 @@ void simulate_gl(Voxel_space* vs, const float start_height, char* outfile) {
 
             }
             fprintf(f_out, "\n");
+
+            free(vp);
+            free(vt); 
+            free(vn);
         }
 
         t += DT;
